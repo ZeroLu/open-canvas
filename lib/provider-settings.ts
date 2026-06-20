@@ -6,6 +6,8 @@ export const DEFAULT_PROVIDER_SETTINGS: ProviderSettings = {
   openrouterApiKey: '',
   openrouterBaseUrl: 'https://openrouter.ai/api/v1',
   replicateApiToken: '',
+  cyberbaraApiKey: '',
+  cyberbaraBaseUrl: 'https://cyberbara.com',
   storageProvider: 'disabled',
   storageS3Endpoint: '',
   storageS3Region: 'auto',
@@ -20,7 +22,9 @@ const baseSchema = z.object({
   openrouterApiKey: z.string(),
   openrouterBaseUrl: z.string(),
   replicateApiToken: z.string(),
-  storageProvider: z.enum(['disabled', 's3-compatible']),
+  cyberbaraApiKey: z.string(),
+  cyberbaraBaseUrl: z.string(),
+  storageProvider: z.enum(['disabled', 's3-compatible', 'cyberbara']),
   storageS3Endpoint: z.string(),
   storageS3Region: z.string(),
   storageS3AccessKeyId: z.string(),
@@ -39,6 +43,28 @@ export const providerSettingsSchema = baseSchema.superRefine((value, ctx) => {
       code: z.ZodIssueCode.custom,
       path: ['openrouterBaseUrl'],
       message: 'OpenRouter base URL must be a valid URL.',
+    });
+  }
+
+  if (
+    value.cyberbaraBaseUrl.trim() &&
+    !z.url().safeParse(value.cyberbaraBaseUrl.trim()).success
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['cyberbaraBaseUrl'],
+      message: 'Cyberbara base URL must be a valid URL.',
+    });
+  }
+
+  if (
+    value.storageProvider === 'cyberbara' &&
+    !value.cyberbaraApiKey.trim()
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['cyberbaraApiKey'],
+      message: 'Cyberbara API key is required.',
     });
   }
 

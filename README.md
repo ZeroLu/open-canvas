@@ -14,8 +14,8 @@ The goal is straightforward:
 
 - local-first canvas UI built with React Flow
 - note, text, image, and video nodes
-- browser-local API key storage for `OpenRouter` and `Replicate`
-- browser-local document persistence
+- browser-local API key storage for `OpenRouter`, `Replicate`, and `Cyberbara`
+- multiple browser-local canvases
 - export and import as JSON
 - upstream node output is injected into downstream execution
 - storage-backed image and video uploads for canvas nodes
@@ -24,14 +24,22 @@ The goal is straightforward:
 
 This starter keeps the provider layer intentionally simple.
 
-- `Text` nodes call `OpenRouter`
-- `Image` and `Video` nodes call `Replicate`
+- `Text` nodes can call `Cyberbara` or `OpenRouter`
+- `Image` and `Video` nodes can call `Cyberbara` or `Replicate`
+- uploads can use `Cyberbara` storage or `S3-compatible` storage
 
-That means a community fork can add more adapters later without touching the canvas surface.
+`Cyberbara` is the default provider for new text, image, and video nodes. Media generation and uploads use the documented `cyberbara.com/api/v1` API. Text uses the Gemini 3 Flash chat endpoint used by the main Cyberbara canvas stack.
+
+If a specific Cyberbara key is scoped for media only and is rejected by the Gemini endpoint, switch text nodes to `OpenRouter` in the node editor.
+
+If you choose Cyberbara for media work, one API key is enough for image generation, video generation, and uploads.
 
 ## Storage abstraction
 
-This repo includes a storage provider interface and a first `S3-compatible` implementation that is already wired into node uploads.
+This repo includes a storage provider interface and two upload paths:
+
+- `Cyberbara` uploads, which reuse the same Cyberbara API key
+- `S3-compatible` uploads for self-hosted or third-party object storage
 
 - storage contracts live in `lib/storage/index.ts`
 - provider bootstrapping lives in `lib/storage/manager.ts`
@@ -41,7 +49,7 @@ This repo includes a storage provider interface and a first `S3-compatible` impl
 
 ### Supported configuration
 
-You can either save these values in the in-app provider settings form or set them as environment variables:
+You can save storage values in the in-app provider settings form, or set server-side defaults as environment variables:
 
 ```bash
 STORAGE_PROVIDER=s3-compatible
@@ -56,6 +64,17 @@ STORAGE_S3_PATH_PREFIX=uploads
 
 This is designed to work with any S3-compatible backend, including self-hosted object storage.
 
+## Local persistence
+
+The app is local-first.
+
+- all provider settings are saved in browser local storage
+- all canvases are saved in browser local storage
+- the workspace key is `open-canvas/workspace/v1`
+- older single-canvas saves in `open-canvas/v1` are migrated on load
+
+You can create multiple canvases from the left sidebar. Export saves the active canvas as JSON. Importing a JSON file creates a new local canvas instead of overwriting the current one.
+
 ## Run locally
 
 ```bash
@@ -65,15 +84,17 @@ pnpm dev
 
 Open `http://localhost:3000`.
 
-Then open the provider settings form in the left sidebar and save:
+Then open the provider settings form in the left sidebar and save what you need:
 
-- `OpenRouter API Key`
-- `Replicate API Token`
-- optional `S3-compatible` storage settings for uploads
+- `Cyberbara API Key` for Cyberbara text, image, video, and upload flows
+- `OpenRouter API Key` if you want text nodes to run on OpenRouter instead
+- `Replicate API Token` if you want to run image or video nodes on Replicate instead
+- optional `S3-compatible` storage settings if you want uploads to go to your own object storage
 
 The form validates provider values before saving:
 
 - invalid URLs are rejected
+- `Cyberbara API Key` is required when Cyberbara uploads are enabled
 - S3 endpoint, access key, secret key, and bucket are required when storage is enabled
 - saved values are persisted in browser local storage
 
@@ -86,15 +107,21 @@ This repo does not hardcode provider catalogs yet. You supply the model string o
 Examples:
 
 - text node: an OpenRouter-compatible chat model
-- image node: a Replicate model slug such as a Flux-style model
-- video node: a Replicate model slug for video generation
+- image node: a Cyberbara model slug such as `nano-banana-pro`, or a Replicate model slug
+- video node: a Cyberbara model slug such as `seedance-1-lite`, or a Replicate model slug
 
-For Replicate nodes, the advanced JSON box is merged into the request `input`. This is important because many Replicate models expose different parameter names.
+For Replicate nodes, the advanced JSON box is merged into the request `input`.
+
+For Cyberbara image and video nodes, the advanced JSON box becomes the request `options` object. The app also infers the `scene` automatically:
+
+- `text-to-image` / `image-to-image`
+- `text-to-video` / `image-to-video` / `video-to-video`
 
 The canvas applies these rules:
 
 - if `input.prompt` is missing, it fills it from the node prompt
 - if an upstream media node exists and you did not set your own image field, it injects that media URL into a common image input field
+- if a Cyberbara media node has upstream media and you did not set your own `image_input` or `video_input`, it injects those values automatically
 
 ## Known limitations in this first cut
 
@@ -105,6 +132,7 @@ The canvas applies these rules:
 - no execution queue
 - no provider-specific dynamic form generation from model schemas yet
 - no model catalog yet
+- Cyberbara text currently depends on the Gemini 3 Flash endpoint that the main product stack uses, not the documented public media API surface
 
 ## Extraction roadmap
 
@@ -147,6 +175,6 @@ The short version:
 - confirm you have the right to publish every file in this repo
 - choose your public repo name and description
 - fill provider examples in the README
-- test a full flow with your own OpenRouter, Replicate, and storage credentials
+- test a full flow with your own OpenRouter, Cyberbara, Replicate, and storage credentials
 
 Contribution guidelines live in [CONTRIBUTING.md](./CONTRIBUTING.md).

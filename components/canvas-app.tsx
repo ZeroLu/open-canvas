@@ -28,15 +28,19 @@ import {
   type Viewport,
 } from '@xyflow/react';
 import {
+  Copy,
   Download,
   FileImage,
   FileText,
+  FolderOpen,
   LoaderCircle,
   NotebookPen,
   Play,
+  Plus,
   RotateCcw,
   Save,
   Settings2,
+  SquarePen,
   Trash2,
   Upload,
   Video,
@@ -52,12 +56,15 @@ import {
 } from '@/lib/provider-settings';
 import type {
   ProviderSettings,
+  StoredCanvasRecord,
   StoredCanvasState,
+  StoredCanvasWorkspace,
   WorkflowNodeData,
   WorkflowNodeType,
 } from '@/lib/types';
 
-const STORAGE_KEY = 'open-canvas/v1';
+const LEGACY_STORAGE_KEY = 'open-canvas/v1';
+const WORKSPACE_STORAGE_KEY = 'open-canvas/workspace/v1';
 
 type RuntimeNodeData = WorkflowNodeData & {
   onRun: (id: string) => void;
@@ -88,21 +95,81 @@ const NODE_META: Record<
     label: 'Text',
     icon: FileText,
     borderClass: 'border-sky-500/60',
-    provider: 'openrouter',
+    provider: 'cyberbara',
   },
   image: {
     label: 'Image',
     icon: FileImage,
     borderClass: 'border-emerald-500/60',
-    provider: 'replicate',
+    provider: 'cyberbara',
   },
   video: {
     label: 'Video',
     icon: Video,
     borderClass: 'border-violet-500/60',
-    provider: 'replicate',
+    provider: 'cyberbara',
   },
 };
+
+function createStoredCanvasState(name: string): StoredCanvasState {
+  const starterNodes = [
+    createNode('note', { x: 80, y: 120 }, 1),
+    createNode('text', { x: 420, y: 120 }, 2),
+    createNode('image', { x: 780, y: 120 }, 3),
+  ];
+  const starterEdges: StoredEdge[] = [
+    {
+      id: 'edge-1',
+      source: starterNodes[0].id,
+      target: starterNodes[1].id,
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+      },
+    },
+    {
+      id: 'edge-2',
+      source: starterNodes[1].id,
+      target: starterNodes[2].id,
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+      },
+    },
+  ];
+  const updatedAt = new Date().toISOString();
+
+  return {
+    version: 2,
+    name,
+    updatedAt,
+    nodes: starterNodes.map((node) => ({
+      id: node.id,
+      position: node.position,
+      data: node.data,
+    })),
+    edges: starterEdges.map((edge) => ({
+      id: edge.id,
+      source: edge.source,
+      target: edge.target,
+    })),
+    viewport: DEFAULT_VIEWPORT,
+    settings: DEFAULT_PROVIDER_SETTINGS,
+  };
+}
+
+function createCanvasRecord(name: string): StoredCanvasRecord {
+  const state = createStoredCanvasState(name);
+
+  return {
+    id: crypto.randomUUID(),
+    name,
+    updatedAt: state.updatedAt || new Date().toISOString(),
+    state,
+  };
+}
+
+function getCanvasNameFromFile(fileName: string) {
+  return fileName.replace(/\.json$/i, '').trim() || 'Imported canvas';
+}
 
 function createNode(
   kind: WorkflowNodeType,
@@ -111,6 +178,14 @@ function createNode(
 ): StoredNode {
   const meta = NODE_META[kind];
   const exampleTitle = `${meta.label} ${index}`;
+  const defaultModel =
+    kind === 'text'
+      ? 'gemini-3-flash'
+      : kind === 'image'
+        ? 'nano-banana-pro'
+        : kind === 'video'
+          ? 'seedance-1-lite'
+          : '';
 
   return {
     id: `node-${Date.now()}-${index}`,
@@ -120,7 +195,7 @@ function createNode(
       title: exampleTitle,
       kind,
       provider: meta.provider,
-      model: '',
+      model: defaultModel,
       prompt:
         kind === 'text'
           ? 'Turn the upstream brief into a production-ready prompt.'
@@ -146,10 +221,11 @@ function createNode(
 
 function serializeNodes(nodes: FlowNode[]): StoredNode[] {
   return nodes.map((node) => {
-    const data = { ...node.data } as WorkflowNodeData;
+    const { onRun, ...data } = node.data;
+    void onRun;
     return {
       ...node,
-      data,
+      data: data as WorkflowNodeData,
     };
   });
 }
@@ -287,6 +363,8 @@ export function CanvasApp() {
   const [nodes, setNodes] = useState<FlowNode[]>([]);
   const [edges, setEdges] = useState<StoredEdge[]>([]);
   const [viewport, setViewport] = useState<Viewport>(DEFAULT_VIEWPORT);
+  const [canvasRecords, setCanvasRecords] = useState<StoredCanvasRecord[]>([]);
+  const [activeCanvasId, setActiveCanvasId] = useState<string | null>(null);
   const [settings, setSettings] = useState<ProviderSettings>(
     DEFAULT_PROVIDER_SETTINGS
   );
@@ -302,6 +380,8 @@ export function CanvasApp() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const mediaUploadInputRef = useRef<HTMLInputElement | null>(null);
   const pollingTimersRef = useRef<Map<string, number>>(new Map());
+  const suspendPersistenceRef = useRef(false);
+  const runNodeRef = useRef<(id: string) => void>(() => {});
   const [uploadingNodeId, setUploadingNodeId] = useState<string | null>(null);
 
   const clearPolling = useCallback((nodeId: string) => {
@@ -321,6 +401,32 @@ export function CanvasApp() {
     []
   );
 
+  const currentCanvas = useMemo(
+    () => canvasRecords.find((record) => record.id === activeCanvasId) || null,
+    [activeCanvasId, canvasRecords]
+  );
+
+  const serializeCurrentCanvasState = useCallback(
+    (name: string): StoredCanvasState => ({
+      version: 2,
+      name,
+      updatedAt: new Date().toISOString(),
+      nodes: serializeNodes(nodes).map((node) => ({
+        id: node.id,
+        position: node.position,
+        data: node.data,
+      })),
+      edges: edges.map((edge) => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+      })),
+      viewport,
+      settings,
+    }),
+    [edges, nodes, settings, viewport]
+  );
+
   const pollReplicateNode = useCallback(
     async (nodeId: string, predictionId: string) => {
       try {
@@ -336,6 +442,7 @@ export function CanvasApp() {
           },
           body: JSON.stringify({
             nodeType: node.data.kind,
+            provider: node.data.provider,
             model: node.data.model,
             prompt: node.data.prompt,
             inputJson: node.data.inputJson,
@@ -452,6 +559,7 @@ export function CanvasApp() {
           },
           body: JSON.stringify({
             nodeType: currentNode.data.kind,
+            provider: currentNode.data.provider,
             model: currentNode.data.model,
             prompt: currentNode.data.prompt,
             inputJson: currentNode.data.inputJson,
@@ -510,18 +618,75 @@ export function CanvasApp() {
     [clearPolling, edges, nodes, pollReplicateNode, settings, updateNode]
   );
 
+  runNodeRef.current = runNode;
+
+  const handleRunNode = useCallback((nodeId: string) => {
+    void runNodeRef.current(nodeId);
+  }, []);
+
+  const loadCanvasRecord = useCallback(
+    (record: StoredCanvasRecord) => {
+      suspendPersistenceRef.current = true;
+      pollingTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+      pollingTimersRef.current.clear();
+      setNodes(decorateNodes(record.state.nodes as StoredNode[], handleRunNode));
+      setEdges(record.state.edges as StoredEdge[]);
+      setViewport(record.state.viewport || DEFAULT_VIEWPORT);
+      const normalizedSettings = normalizeProviderSettings(record.state.settings);
+      setSettings(normalizedSettings);
+      setSettingsDraft(normalizedSettings);
+      setSettingsErrors({});
+      setSettingsNotice(null);
+      setSelectedNodeId(record.state.nodes[0]?.id || null);
+      setActiveCanvasId(record.id);
+
+      window.setTimeout(() => {
+        suspendPersistenceRef.current = false;
+      }, 0);
+    },
+    [handleRunNode]
+  );
+
   useEffect(() => {
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as StoredCanvasState;
-        setNodes(decorateNodes(parsed.nodes as StoredNode[], runNode));
-        setEdges(parsed.edges as StoredEdge[]);
-        setViewport(parsed.viewport || DEFAULT_VIEWPORT);
-        const normalizedSettings = normalizeProviderSettings(parsed.settings);
-        setSettings(normalizedSettings);
-        setSettingsDraft(normalizedSettings);
-        setSelectedNodeId(parsed.nodes[0]?.id || null);
+      const workspaceRaw = window.localStorage.getItem(WORKSPACE_STORAGE_KEY);
+      if (workspaceRaw) {
+        const parsedWorkspace = JSON.parse(workspaceRaw) as StoredCanvasWorkspace;
+        const canvases = Array.isArray(parsedWorkspace.canvases)
+          ? parsedWorkspace.canvases
+          : [];
+
+        if (canvases.length > 0) {
+          setCanvasRecords(canvases);
+          const nextActiveCanvas =
+            canvases.find((record) => record.id === parsedWorkspace.activeCanvasId) ||
+            canvases[0];
+          loadCanvasRecord(nextActiveCanvas);
+          setHydrated(true);
+          return;
+        }
+      }
+
+      const legacyRaw = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (legacyRaw) {
+        const parsed = JSON.parse(legacyRaw) as StoredCanvasState;
+        const legacyRecord: StoredCanvasRecord = {
+          id: crypto.randomUUID(),
+          name: parsed.name || 'Imported canvas',
+          updatedAt: parsed.updatedAt || new Date().toISOString(),
+          state: {
+            version: 2,
+            name: parsed.name || 'Imported canvas',
+            updatedAt: parsed.updatedAt || new Date().toISOString(),
+            nodes: parsed.nodes,
+            edges: parsed.edges,
+            viewport: parsed.viewport || DEFAULT_VIEWPORT,
+            settings: normalizeProviderSettings(parsed.settings),
+          },
+        };
+
+        setCanvasRecords([legacyRecord]);
+        loadCanvasRecord(legacyRecord);
         setHydrated(true);
         return;
       }
@@ -529,64 +694,49 @@ export function CanvasApp() {
       console.error('Failed to hydrate local canvas state', error);
     }
 
-    const starterNodes = decorateNodes(
-      [
-        createNode('note', { x: 80, y: 120 }, 1),
-        createNode('text', { x: 420, y: 120 }, 2),
-        createNode('image', { x: 780, y: 120 }, 3),
-      ],
-      runNode
-    );
-    const starterEdges: StoredEdge[] = [
-      {
-        id: 'edge-1',
-        source: starterNodes[0].id,
-        target: starterNodes[1].id,
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-        },
-      },
-      {
-        id: 'edge-2',
-        source: starterNodes[1].id,
-        target: starterNodes[2].id,
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-        },
-      },
-    ];
-
-    setNodes(starterNodes);
-    setEdges(starterEdges);
-    setSettings(DEFAULT_PROVIDER_SETTINGS);
-    setSettingsDraft(DEFAULT_PROVIDER_SETTINGS);
-    setSelectedNodeId(starterNodes[0]?.id || null);
+    const starterRecord = createCanvasRecord('Canvas 1');
+    setCanvasRecords([starterRecord]);
+    loadCanvasRecord(starterRecord);
     setHydrated(true);
-  }, [runNode]);
+  }, [loadCanvasRecord]);
 
   useEffect(() => {
-    if (!hydrated) {
+    if (!hydrated || suspendPersistenceRef.current || !activeCanvasId) {
       return;
     }
 
-    const payload: StoredCanvasState = {
+    const nextState = serializeCurrentCanvasState(currentCanvas?.name || 'Untitled canvas');
+    setCanvasRecords((current) =>
+      current.map((record) =>
+        record.id === activeCanvasId
+          ? {
+              ...record,
+              updatedAt: nextState.updatedAt || new Date().toISOString(),
+              state: nextState,
+            }
+          : record
+      )
+    );
+  }, [
+    activeCanvasId,
+    currentCanvas?.name,
+    hydrated,
+    serializeCurrentCanvasState,
+  ]);
+
+  useEffect(() => {
+    if (!hydrated || canvasRecords.length === 0 || !activeCanvasId) {
+      return;
+    }
+
+    const payload: StoredCanvasWorkspace = {
       version: 1,
-      nodes: serializeNodes(nodes).map((node) => ({
-        id: node.id,
-        position: node.position,
-        data: node.data,
-      })),
-      edges: edges.map((edge) => ({
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-      })),
-      viewport,
-      settings,
+      activeCanvasId,
+      canvases: canvasRecords,
     };
 
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  }, [edges, hydrated, nodes, settings, viewport]);
+    window.localStorage.setItem(WORKSPACE_STORAGE_KEY, JSON.stringify(payload));
+  }, [activeCanvasId, canvasRecords, hydrated]);
 
   useEffect(() => {
     const timers = pollingTimersRef.current;
@@ -600,7 +750,7 @@ export function CanvasApp() {
     () => nodes.find((node) => node.id === selectedNodeId) || null,
     [nodes, selectedNodeId]
   );
-  const storageUploadsEnabled = settings.storageProvider === 's3-compatible';
+  const storageUploadsEnabled = settings.storageProvider !== 'disabled';
 
   const addNewNode = useCallback(
     (kind: WorkflowNodeType) => {
@@ -609,36 +759,101 @@ export function CanvasApp() {
         { x: 120 + nodes.length * 40, y: 120 + nodes.length * 28 },
         nodes.length + 1
       );
-      const decorated = decorateNodes([next], runNode)[0];
+      const decorated = decorateNodes([next], handleRunNode)[0];
       setNodes((current) => [...current, decorated]);
       setSelectedNodeId(decorated.id);
     },
-    [nodes.length, runNode]
+    [handleRunNode, nodes.length]
   );
 
   const resetCanvas = useCallback(() => {
     pollingTimersRef.current.forEach((timer) => window.clearTimeout(timer));
     pollingTimersRef.current.clear();
-    window.localStorage.removeItem(STORAGE_KEY);
-    window.location.reload();
-  }, []);
+    window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+    window.localStorage.removeItem(WORKSPACE_STORAGE_KEY);
+    const starterRecord = createCanvasRecord('Canvas 1');
+    setCanvasRecords([starterRecord]);
+    loadCanvasRecord(starterRecord);
+  }, [loadCanvasRecord]);
+
+  const createNewCanvas = useCallback(() => {
+    const nextRecord = createCanvasRecord(`Canvas ${canvasRecords.length + 1}`);
+    setCanvasRecords((current) => [...current, nextRecord]);
+    loadCanvasRecord(nextRecord);
+  }, [canvasRecords.length, loadCanvasRecord]);
+
+  const duplicateCurrentCanvas = useCallback(() => {
+    if (!currentCanvas) {
+      return;
+    }
+
+    const duplicatedName = `${currentCanvas.name} Copy`;
+    const nextState = serializeCurrentCanvasState(duplicatedName);
+    const nextRecord: StoredCanvasRecord = {
+      id: crypto.randomUUID(),
+      name: duplicatedName,
+      updatedAt: nextState.updatedAt || new Date().toISOString(),
+      state: {
+        ...nextState,
+        name: duplicatedName,
+      },
+    };
+
+    setCanvasRecords((current) => [...current, nextRecord]);
+    loadCanvasRecord(nextRecord);
+  }, [currentCanvas, loadCanvasRecord, serializeCurrentCanvasState]);
+
+  const renameCurrentCanvas = useCallback((name: string) => {
+    const normalizedName = name.trim() || 'Untitled canvas';
+    setCanvasRecords((current) =>
+      current.map((record) =>
+        record.id === activeCanvasId
+          ? {
+              ...record,
+              name: normalizedName,
+              state: {
+                ...record.state,
+                name: normalizedName,
+              },
+            }
+          : record
+      )
+    );
+  }, [activeCanvasId]);
+
+  const deleteCanvas = useCallback(
+    (canvasId: string) => {
+      if (canvasRecords.length <= 1) {
+        const starterRecord = createCanvasRecord('Canvas 1');
+        setCanvasRecords([starterRecord]);
+        loadCanvasRecord(starterRecord);
+        return;
+      }
+
+      const nextRecords = canvasRecords.filter((record) => record.id !== canvasId);
+      setCanvasRecords(nextRecords);
+
+      if (activeCanvasId === canvasId) {
+        loadCanvasRecord(nextRecords[0]);
+      }
+    },
+    [activeCanvasId, canvasRecords, loadCanvasRecord]
+  );
+
+  const switchCanvas = useCallback(
+    (canvasId: string) => {
+      const nextRecord = canvasRecords.find((record) => record.id === canvasId);
+      if (!nextRecord || nextRecord.id === activeCanvasId) {
+        return;
+      }
+
+      loadCanvasRecord(nextRecord);
+    },
+    [activeCanvasId, canvasRecords, loadCanvasRecord]
+  );
 
   const exportCanvas = useCallback(() => {
-    const payload: StoredCanvasState = {
-      version: 1,
-      nodes: serializeNodes(nodes).map((node) => ({
-        id: node.id,
-        position: node.position,
-        data: node.data,
-      })),
-      edges: edges.map((edge) => ({
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-      })),
-      viewport,
-      settings,
-    };
+    const payload = serializeCurrentCanvasState(currentCanvas?.name || 'Untitled canvas');
 
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: 'application/json',
@@ -646,10 +861,13 @@ export function CanvasApp() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = 'open-canvas.json';
+    anchor.download = `${(currentCanvas?.name || 'open-canvas')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'open-canvas'}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
-  }, [edges, nodes, settings, viewport]);
+  }, [currentCanvas?.name, serializeCurrentCanvasState]);
 
   const importCanvas = useCallback(
     async (event: ChangeEvent<HTMLInputElement>) => {
@@ -660,16 +878,29 @@ export function CanvasApp() {
 
       const raw = await file.text();
       const parsed = JSON.parse(raw) as StoredCanvasState;
-      setNodes(decorateNodes(parsed.nodes as StoredNode[], runNode));
-      setEdges(parsed.edges as StoredEdge[]);
-      setViewport(parsed.viewport || DEFAULT_VIEWPORT);
       const normalizedSettings = normalizeProviderSettings(parsed.settings);
-      setSettings(normalizedSettings);
-      setSettingsDraft(normalizedSettings);
-      setSelectedNodeId(parsed.nodes[0]?.id || null);
+      const importedName =
+        parsed.name?.trim() || getCanvasNameFromFile(file.name);
+      const nextRecord: StoredCanvasRecord = {
+        id: crypto.randomUUID(),
+        name: importedName,
+        updatedAt: parsed.updatedAt || new Date().toISOString(),
+        state: {
+          version: 2,
+          name: importedName,
+          updatedAt: parsed.updatedAt || new Date().toISOString(),
+          nodes: parsed.nodes,
+          edges: parsed.edges,
+          viewport: parsed.viewport || DEFAULT_VIEWPORT,
+          settings: normalizedSettings,
+        },
+      };
+
+      setCanvasRecords((current) => [...current, nextRecord]);
+      loadCanvasRecord(nextRecord);
       event.target.value = '';
     },
-    [runNode]
+    [loadCanvasRecord]
   );
 
   const updateSelectedNodeData = useCallback(
@@ -745,6 +976,8 @@ export function CanvasApp() {
       try {
         const formData = new FormData();
         formData.set('file', file);
+        formData.set('cyberbaraApiKey', settings.cyberbaraApiKey);
+        formData.set('cyberbaraBaseUrl', settings.cyberbaraBaseUrl);
         formData.set('storageProvider', settings.storageProvider);
         formData.set('storageS3Endpoint', settings.storageS3Endpoint);
         formData.set('storageS3Region', settings.storageS3Region);
@@ -864,6 +1097,86 @@ export function CanvasApp() {
 
         <div className="mt-8 space-y-4">
           <div className="rounded-lg border border-white/10 bg-black/20 p-3">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div>
+                <div className="text-sm font-semibold text-white">Canvases</div>
+                <p className="mt-1 text-xs leading-5 text-zinc-400">
+                  Stored locally in this browser. Importing JSON creates a new canvas.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={createNewCanvas}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10"
+                aria-label="Create canvas"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                Active canvas
+              </label>
+              <div className="flex gap-2">
+                <div className="flex items-center justify-center rounded-lg border border-white/10 bg-white/5 px-3">
+                  <SquarePen className="h-4 w-4 text-zinc-400" />
+                </div>
+                <input
+                  value={currentCanvas?.name || ''}
+                  onChange={(event) => renameCurrentCanvas(event.target.value)}
+                  placeholder="Canvas name"
+                  className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none placeholder:text-zinc-500 focus:border-white/30"
+                />
+                <button
+                  type="button"
+                  onClick={duplicateCurrentCanvas}
+                  disabled={!currentCanvas}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Duplicate active canvas"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-3 space-y-2">
+              {canvasRecords.map((record) => (
+                <div
+                  key={record.id}
+                  className={`flex items-center gap-2 rounded-lg border px-2 py-2 ${
+                    record.id === activeCanvasId
+                      ? 'border-sky-500/40 bg-sky-500/10'
+                      : 'border-white/10 bg-white/5'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => switchCanvas(record.id)}
+                    className="min-w-0 flex-1 text-left"
+                  >
+                    <div className="flex items-center gap-2 text-sm text-white">
+                      <FolderOpen className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{record.name}</span>
+                    </div>
+                    <div className="mt-1 text-xs text-zinc-500">
+                      {formatTimestamp(record.updatedAt)}
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteCanvas(record.id)}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-white/5 hover:bg-white/10"
+                    aria-label={`Delete ${record.name}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-white/10 bg-black/20 p-3">
             <div className="mb-3">
               <div className="text-sm font-semibold text-white">Provider settings</div>
               <p className="mt-1 text-xs leading-5 text-zinc-400">
@@ -929,6 +1242,47 @@ export function CanvasApp() {
 
               <div>
                 <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                  Cyberbara
+                </div>
+                <div className="space-y-2">
+                  <input
+                    type="password"
+                    value={settingsDraft.cyberbaraApiKey}
+                    onChange={(event) =>
+                      setSettingsDraft((current) => ({
+                        ...current,
+                        cyberbaraApiKey: event.target.value,
+                      }))
+                    }
+                    placeholder="Cyberbara API key"
+                    className={getFieldClass(Boolean(settingsErrors.cyberbaraApiKey))}
+                  />
+                  {settingsErrors.cyberbaraApiKey ? (
+                    <p className="text-xs text-rose-300">
+                      {settingsErrors.cyberbaraApiKey}
+                    </p>
+                  ) : null}
+                  <input
+                    value={settingsDraft.cyberbaraBaseUrl}
+                    onChange={(event) =>
+                      setSettingsDraft((current) => ({
+                        ...current,
+                        cyberbaraBaseUrl: event.target.value,
+                      }))
+                    }
+                    placeholder="https://cyberbara.com"
+                    className={getFieldClass(Boolean(settingsErrors.cyberbaraBaseUrl))}
+                  />
+                  {settingsErrors.cyberbaraBaseUrl ? (
+                    <p className="text-xs text-rose-300">
+                      {settingsErrors.cyberbaraBaseUrl}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
                   Storage
                 </div>
                 <div className="space-y-2">
@@ -943,10 +1297,16 @@ export function CanvasApp() {
                     className={getFieldClass(Boolean(settingsErrors.storageProvider))}
                   >
                     <option value="disabled">Disabled</option>
+                    <option value="cyberbara">Cyberbara uploads</option>
                     <option value="s3-compatible">S3-compatible</option>
                   </select>
 
-                  {settingsDraft.storageProvider === 's3-compatible' ? (
+                  {settingsDraft.storageProvider === 'cyberbara' ? (
+                    <p className="text-xs leading-5 text-zinc-500">
+                      Cyberbara uploads reuse the same Cyberbara API key and do not
+                      need extra storage credentials.
+                    </p>
+                  ) : settingsDraft.storageProvider === 's3-compatible' ? (
                     <div className="space-y-2">
                       <input
                         value={settingsDraft.storageS3Endpoint}
@@ -1057,8 +1417,8 @@ export function CanvasApp() {
                   ) : (
                     <p className="text-xs leading-5 text-zinc-500">
                       Keep storage disabled if you only want text and hosted media
-                      generation. Enable S3-compatible storage to upload reference
-                      images and videos.
+                      generation. Enable Cyberbara uploads or S3-compatible storage to
+                      upload reference images and videos.
                     </p>
                   )}
                 </div>
@@ -1126,7 +1486,9 @@ export function CanvasApp() {
       <section className="relative min-h-screen">
         <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between border-b border-white/10 bg-black/35 px-4 py-3 backdrop-blur">
           <div>
-            <div className="text-sm font-semibold text-white">Workflow graph</div>
+            <div className="text-sm font-semibold text-white">
+              {currentCanvas?.name || 'Workflow graph'}
+            </div>
             <div className="text-xs text-zinc-400">
               Connect note, text, image, and video nodes. Upstream output is injected
               into downstream execution.
@@ -1140,6 +1502,7 @@ export function CanvasApp() {
 
         <div className="h-screen pt-[62px]">
           <ReactFlow<FlowNode, StoredEdge>
+            key={activeCanvasId || 'open-canvas'}
             nodes={nodes}
             edges={edges}
             nodeTypes={nodeTypes}
@@ -1254,11 +1617,24 @@ export function CanvasApp() {
                     className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-white/30"
                   >
                     {selectedNode.data.kind === 'text' ? (
-                      <option value="openrouter">OpenRouter</option>
+                      <>
+                        <option value="cyberbara">Cyberbara</option>
+                        <option value="openrouter">OpenRouter</option>
+                      </>
                     ) : (
-                      <option value="replicate">Replicate</option>
+                      <>
+                        <option value="cyberbara">Cyberbara</option>
+                        <option value="replicate">Replicate</option>
+                      </>
                     )}
                   </select>
+                  {selectedNode.data.kind === 'text' ? (
+                    <p className="mt-2 text-xs leading-5 text-zinc-500">
+                      Cyberbara text nodes use the Gemini 3 Flash chat endpoint. If
+                      your key is only meant for media generation, OpenRouter remains
+                      available as a fallback.
+                    </p>
+                  ) : null}
                 </div>
 
                 <div>
@@ -1272,8 +1648,16 @@ export function CanvasApp() {
                     }
                     placeholder={
                       selectedNode.data.kind === 'text'
-                        ? 'openai/gpt-4o-mini or google/gemini-flash-*'
-                        : 'black-forest-labs/flux-schnell'
+                        ? selectedNode.data.provider === 'cyberbara'
+                          ? 'gemini-3-flash'
+                          : 'openai/gpt-4o-mini or google/gemini-flash-*'
+                        : selectedNode.data.kind === 'image'
+                          ? selectedNode.data.provider === 'cyberbara'
+                            ? 'nano-banana-pro'
+                            : 'black-forest-labs/flux-schnell'
+                          : selectedNode.data.provider === 'cyberbara'
+                            ? 'seedance-1-lite'
+                            : 'kwaivgi/kling-v1.6-pro'
                     }
                     className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none placeholder:text-zinc-500 focus:border-white/30"
                   />
@@ -1309,9 +1693,9 @@ export function CanvasApp() {
                       className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-3 font-mono text-sm leading-6 outline-none placeholder:text-zinc-500 focus:border-white/30"
                     />
                     <p className="mt-2 text-xs leading-5 text-zinc-500">
-                      This is merged into Replicate input. If an upstream image or
-                      video exists, the app injects it into a common media field when
-                      you do not specify one yourself.
+                      For Replicate, this is merged into `input`. For Cyberbara, this
+                      becomes `options`. If upstream media exists, the app injects it
+                      when you do not specify your own media inputs.
                     </p>
                   </div>
                 )}
@@ -1359,8 +1743,8 @@ export function CanvasApp() {
                     </p>
                     {!storageUploadsEnabled ? (
                       <p className="mt-2 text-xs leading-5 text-amber-300">
-                        Save a valid S3-compatible storage provider first to enable
-                        uploads.
+                        Save a valid Cyberbara or S3-compatible storage provider first
+                        to enable uploads.
                       </p>
                     ) : null}
                     <input

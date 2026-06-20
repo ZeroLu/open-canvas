@@ -2,8 +2,8 @@ export type WorkflowNodeType = 'note' | 'text' | 'image' | 'video';
 
 export type WorkflowNodeStatus = 'idle' | 'running' | 'success' | 'error';
 
-export type ProviderKind = 'openrouter' | 'replicate';
-export type StorageProviderKind = 'disabled' | 's3-compatible';
+export type ProviderKind = 'openrouter' | 'replicate' | 'cyberbara';
+export type StorageProviderKind = 'disabled' | 's3-compatible' | 'cyberbara';
 
 export interface WorkflowNodeData extends Record<string, unknown> {
   title: string;
@@ -25,6 +25,8 @@ export interface ProviderSettings {
   openrouterApiKey: string;
   openrouterBaseUrl: string;
   replicateApiToken: string;
+  cyberbaraApiKey: string;
+  cyberbaraBaseUrl: string;
   storageProvider: StorageProviderKind;
   storageS3Endpoint: string;
   storageS3Region: string;
@@ -36,7 +38,7 @@ export interface ProviderSettings {
 }
 
 export interface StoredCanvasState {
-  version: 1;
+  version: 2;
   nodes: Array<{
     id: string;
     position: { x: number; y: number };
@@ -49,4 +51,19 @@ export interface StoredCanvasState {
   }>;
   viewport: { x: number; y: number; zoom: number };
   settings: ProviderSettings;
+  name?: string;
+  updatedAt?: string;
+}
+
+export interface StoredCanvasRecord {
+  id: string;
+  name: string;
+  updatedAt: string;
+  state: StoredCanvasState;
+}
+
+export interface StoredCanvasWorkspace {
+  version: 1;
+  activeCanvasId: string;
+  canvases: StoredCanvasRecord[];
 }

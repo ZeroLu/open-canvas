@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 
+import { uploadCyberbaraMedia } from '@/lib/cyberbara';
 import {
   normalizeProviderSettings,
   validateProviderSettings,
@@ -76,9 +77,12 @@ export async function uploadCanvasMedia({
   }
 
   const settings = normalizeProviderSettings({
+    cyberbaraApiKey: String(formData.get('cyberbaraApiKey') || ''),
+    cyberbaraBaseUrl: String(formData.get('cyberbaraBaseUrl') || ''),
     storageProvider: String(formData.get('storageProvider') || '') as
       | 'disabled'
-      | 's3-compatible',
+      | 's3-compatible'
+      | 'cyberbara',
     storageS3Endpoint: String(formData.get('storageS3Endpoint') || ''),
     storageS3Region: String(formData.get('storageS3Region') || ''),
     storageS3AccessKeyId: String(formData.get('storageS3AccessKeyId') || ''),
@@ -95,18 +99,13 @@ export async function uploadCanvasMedia({
     const storageIssue = validation.error.issues.find(
       (issue) =>
         typeof issue.path[0] === 'string' &&
-        String(issue.path[0]).startsWith('storage')
+        ['storage', 'cyberbara'].some((prefix) =>
+          String(issue.path[0]).startsWith(prefix)
+        )
     );
     if (storageIssue) {
       throw new Error(storageIssue.message);
     }
-  }
-
-  const storageManager = getStorageManagerFromSettings(settings);
-  if (!storageManager.hasProviders()) {
-    throw new Error(
-      'Storage provider is not configured. Save provider settings with a valid S3-compatible storage config first.'
-    );
   }
 
   const [file] = toFiles(formData);
@@ -130,6 +129,24 @@ export async function uploadCanvasMedia({
 
   if (file.size > maxSizeBytes) {
     throw new Error(`${mediaType} file exceeds ${maxSizeBytes} bytes`);
+  }
+
+  if (settings.storageProvider === 'cyberbara') {
+    const result = await uploadCyberbaraMedia({
+      apiKey: settings.cyberbaraApiKey,
+      baseUrl: settings.cyberbaraBaseUrl,
+      mediaType,
+      file,
+    });
+
+    return result;
+  }
+
+  const storageManager = getStorageManagerFromSettings(settings);
+  if (!storageManager.hasProviders()) {
+    throw new Error(
+      'Storage provider is not configured. Save provider settings with a valid storage config first.'
+    );
   }
 
   const body = new Uint8Array(await file.arrayBuffer());
