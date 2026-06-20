@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Cyberbara Canvas OSS',
+  title: 'Open Canvas',
   description:
     'A local-first open workflow canvas for OpenRouter and Replicate powered creative pipelines.',
 };

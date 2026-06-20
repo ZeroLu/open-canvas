@@ -1,5 +1,5 @@
 {
-  "name": "cyberbara-canvas-oss",
+  "name": "open-canvas",
   "version": "0.1.0",
   "private": true,
   "description": "Local-first open workflow canvas with BYOK providers and S3-compatible uploads",

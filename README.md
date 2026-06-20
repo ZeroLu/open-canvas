@@ -1,6 +1,6 @@
-# Cyberbara Canvas OSS
+# Open Canvas
 
-`Cyberbara Canvas OSS` is a local-first workflow canvas extracted from the direction of Cyberbara's internal canvas.
+`Open Canvas` is a local-first workflow canvas extracted from the direction of Cyberbara's internal canvas.
 
 Status: `alpha`
 
@@ -49,7 +49,7 @@ STORAGE_S3_ENDPOINT=https://your-s3-endpoint.example.com
 STORAGE_S3_REGION=auto
 STORAGE_S3_ACCESS_KEY_ID=...
 STORAGE_S3_SECRET_ACCESS_KEY=...
-STORAGE_S3_BUCKET=cyberbara-canvas
+STORAGE_S3_BUCKET=open-canvas
 STORAGE_S3_PUBLIC_DOMAIN=https://cdn.example.com
 STORAGE_S3_PATH_PREFIX=uploads
 ```

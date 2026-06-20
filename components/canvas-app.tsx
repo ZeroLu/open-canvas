@@ -57,7 +57,7 @@ import type {
   WorkflowNodeType,
 } from '@/lib/types';
 
-const STORAGE_KEY = 'cyberbara-canvas-oss/v1';
+const STORAGE_KEY = 'open-canvas/v1';
 
 type RuntimeNodeData = WorkflowNodeData & {
   onRun: (id: string) => void;
@@ -646,7 +646,7 @@ export function CanvasApp() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = 'cyberbara-canvas.json';
+    anchor.download = 'open-canvas.json';
     anchor.click();
     URL.revokeObjectURL(url);
   }, [edges, nodes, settings, viewport]);
@@ -819,7 +819,7 @@ export function CanvasApp() {
         <div className="mb-6">
           <div className="flex items-center gap-2 text-lg font-semibold text-white">
             <Settings2 className="h-5 w-5" />
-            Cyberbara Canvas OSS
+            Open Canvas
           </div>
           <p className="mt-2 text-sm leading-6 text-zinc-400">
             Local-first workflow canvas. Keys stay in this browser. Documents live in

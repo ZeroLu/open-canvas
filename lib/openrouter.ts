@@ -61,7 +61,7 @@ export async function runOpenRouterText({
       Authorization: `Bearer ${normalizedApiKey}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': 'http://localhost:3000',
-      'X-Title': 'cyberbara-canvas-oss',
+      'X-Title': 'open-canvas',
     },
     body: JSON.stringify({
       model: normalizedModel,
