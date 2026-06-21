@@ -44,6 +44,35 @@ function isCanvasNodeType(value: unknown): value is CanvasNodeType {
   );
 }
 
+function isCanvasLeftHandleId(handleId?: string | null): boolean {
+  return Boolean(handleId) && handleId !== 'right';
+}
+
+function normalizeSerializedEdgeDirection(
+  edge: SerializedCanvasEdge
+): SerializedCanvasEdge {
+  const edgeWithHandles = {
+    ...edge,
+    sourceHandle: edge.sourceHandle || 'right',
+    targetHandle: edge.targetHandle || 'left',
+  };
+
+  if (
+    isCanvasLeftHandleId(edgeWithHandles.sourceHandle) &&
+    !isCanvasLeftHandleId(edgeWithHandles.targetHandle)
+  ) {
+    return {
+      ...edgeWithHandles,
+      source: edgeWithHandles.target,
+      target: edgeWithHandles.source,
+      sourceHandle: edgeWithHandles.targetHandle,
+      targetHandle: edgeWithHandles.sourceHandle,
+    };
+  }
+
+  return edgeWithHandles;
+}
+
 function parseSerializedNode(
   value: unknown
 ): SerializedCanvasNode | CanvasGraphValidationResult {
@@ -200,8 +229,8 @@ function parseSerializedEdge(
     id: value.id,
     source: value.source,
     target: value.target,
-    sourceHandle: value.sourceHandle,
-    targetHandle: value.targetHandle,
+    sourceHandle: value.sourceHandle || 'right',
+    targetHandle: value.targetHandle || 'left',
     type: value.type,
     data: value.data,
   };
@@ -272,7 +301,7 @@ export function parseCanvasGraphPayload(
     if ('ok' in parsedEdge) {
       return parsedEdge;
     }
-    edges.push(parsedEdge);
+    edges.push(normalizeSerializedEdgeDirection(parsedEdge));
   }
 
   return validateCanvasGraph({

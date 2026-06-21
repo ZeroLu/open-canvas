@@ -178,19 +178,25 @@ function normalizeCanvasConnectionDirection(connection: {
   sourceHandle?: string | null;
   targetHandle?: string | null;
 }) {
+  const connectionWithHandles = {
+    ...connection,
+    sourceHandle: connection.sourceHandle || 'right',
+    targetHandle: connection.targetHandle || 'left',
+  };
+
   if (
-    isCanvasLeftHandleId(connection.sourceHandle) &&
-    !isCanvasLeftHandleId(connection.targetHandle)
+    isCanvasLeftHandleId(connectionWithHandles.sourceHandle) &&
+    !isCanvasLeftHandleId(connectionWithHandles.targetHandle)
   ) {
     return {
-      source: connection.target,
-      target: connection.source,
-      sourceHandle: connection.targetHandle,
-      targetHandle: connection.sourceHandle,
+      source: connectionWithHandles.target,
+      target: connectionWithHandles.source,
+      sourceHandle: connectionWithHandles.targetHandle,
+      targetHandle: connectionWithHandles.sourceHandle,
     };
   }
 
-  return connection;
+  return connectionWithHandles;
 }
 
 export const useCanvasStore = create<CanvasStoreState>()((set, get) => ({

@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import {
   applyCanvasNodePatch,
   createEmptyCanvasGraph,
+  normalizeCanvasGraph,
   summarizeCanvasGraph,
   type CanvasDocumentRecord,
   type CanvasDocumentSummary,
@@ -70,9 +71,19 @@ async function readDb(): Promise<LocalCanvasDatabase> {
   try {
     const raw = await readFile(DB_FILE, 'utf8');
     const parsed = JSON.parse(raw) as Partial<LocalCanvasDatabase>;
+    const canvases = Array.isArray(parsed.canvases)
+      ? parsed.canvases.map((canvas) => {
+          const graph = normalizeCanvasGraph(canvas.graph);
+          return {
+            ...canvas,
+            graph,
+            preview: summarizeCanvasGraph(graph),
+          };
+        })
+      : [];
     return {
       version: 1,
-      canvases: Array.isArray(parsed.canvases) ? parsed.canvases : [],
+      canvases,
       runs: Array.isArray(parsed.runs) ? parsed.runs : [],
     };
   } catch {

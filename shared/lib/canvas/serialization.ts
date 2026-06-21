@@ -18,20 +18,26 @@ function isCanvasLeftHandleId(handleId?: string | null): boolean {
 }
 
 function normalizeFlowEdgeDirection(edge: Edge): Edge {
+  const edgeWithHandles: Edge = {
+    ...edge,
+    sourceHandle: edge.sourceHandle || 'right',
+    targetHandle: edge.targetHandle || 'left',
+  };
+
   if (
-    isCanvasLeftHandleId(edge.sourceHandle) &&
-    !isCanvasLeftHandleId(edge.targetHandle)
+    isCanvasLeftHandleId(edgeWithHandles.sourceHandle) &&
+    !isCanvasLeftHandleId(edgeWithHandles.targetHandle)
   ) {
     return {
-      ...edge,
-      source: edge.target,
-      target: edge.source,
-      sourceHandle: edge.targetHandle,
-      targetHandle: edge.sourceHandle,
+      ...edgeWithHandles,
+      source: edgeWithHandles.target,
+      target: edgeWithHandles.source,
+      sourceHandle: edgeWithHandles.targetHandle,
+      targetHandle: edgeWithHandles.sourceHandle,
     };
   }
 
-  return edge;
+  return edgeWithHandles;
 }
 
 export function createCanvasFlowNode(

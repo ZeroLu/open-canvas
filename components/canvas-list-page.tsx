@@ -20,6 +20,7 @@ import { importCanvasFromJsonFile } from '@/lib/canvas-json';
 import { LazyVideo } from '@/shared/blocks/common/lazy-video';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
+import { getMediaDisplayUrl } from '@/shared/lib/media-url';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -77,7 +78,9 @@ function renderCanvasHero(canvas: {
   ) {
     return (
       <img
-        src={canvas.preview.heroMedia.thumbnailUrl || canvas.preview.heroMedia.url}
+        src={getMediaDisplayUrl(
+          canvas.preview.heroMedia.thumbnailUrl || canvas.preview.heroMedia.url
+        )}
         alt={canvas.preview.heroTitle || canvas.title}
         className="h-full w-full object-cover"
       />
@@ -90,7 +93,7 @@ function renderCanvasHero(canvas: {
   ) {
     return (
       <LazyVideo
-        src={canvas.preview.heroMedia.url}
+        src={getMediaDisplayUrl(canvas.preview.heroMedia.url)}
         muted
         playsInline
         className="h-full w-full object-cover"

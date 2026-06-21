@@ -162,6 +162,7 @@ import {
   readCanvasModelPreferences,
   writeCanvasModelPreferences,
 } from '@/shared/lib/model-preferences';
+import { getMediaDisplayUrl } from '@/shared/lib/media-url';
 import { cn } from '@/shared/lib/utils';
 import {
   getPublicModelLabel,
@@ -1407,7 +1408,7 @@ function renderNodePreview(
       >
         <div className="absolute inset-0">
           <img
-            src={primaryImage.thumbnailUrl || primaryImage.url}
+            src={getMediaDisplayUrl(primaryImage.thumbnailUrl || primaryImage.url)}
             alt={displayTitle}
             loading="lazy"
             decoding="async"
@@ -1474,7 +1475,7 @@ function renderNodePreview(
                 )}
               >
                 <img
-                  src={image.thumbnailUrl || image.url}
+                  src={getMediaDisplayUrl(image.thumbnailUrl || image.url)}
                   alt={`${displayTitle} ${index + 1}`}
                   loading="lazy"
                   decoding="async"
@@ -1535,7 +1536,7 @@ function renderNodePreview(
   return primaryVideo?.url ? (
     <div className="relative h-full cursor-grab overflow-hidden rounded-[20px] border border-white/8 bg-black">
       <LazyVideo
-        src={primaryVideo.url}
+        src={getMediaDisplayUrl(primaryVideo.url)}
         controls
         muted
         playsInline
@@ -2506,7 +2507,9 @@ function renderReferencePreview(
       return (
         <div className="group/image-preview relative h-full w-full">
           <img
-            src={reference.media.thumbnailUrl || reference.media.url}
+            src={getMediaDisplayUrl(
+              reference.media.thumbnailUrl || reference.media.url
+            )}
             alt={reference.title}
             className="h-full w-full object-cover"
           />
@@ -2532,7 +2535,7 @@ function renderReferencePreview(
 
     return (
       <video
-        src={reference.media.url}
+        src={getMediaDisplayUrl(reference.media.url)}
         muted
         playsInline
         preload="metadata"
@@ -2592,7 +2595,9 @@ function CanvasReferenceCard({
       if (reference.sourceNodeType === 'image') {
         return (
           <img
-            src={reference.media.thumbnailUrl || reference.media.url}
+            src={getMediaDisplayUrl(
+              reference.media.thumbnailUrl || reference.media.url
+            )}
             alt={reference.title}
             className="h-full w-full object-cover"
           />
@@ -2601,7 +2606,7 @@ function CanvasReferenceCard({
 
       return (
         <video
-          src={reference.media.url}
+          src={getMediaDisplayUrl(reference.media.url)}
           muted
           playsInline
           preload="metadata"
@@ -2916,10 +2921,10 @@ function CanvasMjReferenceAssignments({
                       >
                         {reference.media?.url ? (
                           <img
-                            src={
+                            src={getMediaDisplayUrl(
                               reference.media.thumbnailUrl ||
-                              reference.media.url
-                            }
+                                reference.media.url
+                            )}
                             alt={reference.title}
                             className="h-full w-full cursor-move object-cover"
                           />
@@ -7437,7 +7442,7 @@ function CanvasStudioInner({
                 <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-black">
                   {activePreviewImage ? (
                     <img
-                      src={activePreviewImage.url}
+                      src={getMediaDisplayUrl(activePreviewImage.url)}
                       alt={imagePreview.title}
                       className="max-h-full max-w-full object-contain"
                     />
@@ -7460,7 +7465,9 @@ function CanvasStudioInner({
                             )}
                           >
                             <img
-                              src={image.thumbnailUrl || image.url}
+                              src={getMediaDisplayUrl(
+                                image.thumbnailUrl || image.url
+                              )}
                               alt={`${imagePreview.title} ${index + 1}`}
                               className="h-16 w-16 object-cover sm:h-20 sm:w-20"
                             />

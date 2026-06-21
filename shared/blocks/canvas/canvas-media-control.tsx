@@ -21,6 +21,7 @@ import {
   type CanvasVideoNodeData,
 } from '@/shared/lib/canvas/types';
 import { useCanvasTranslations } from '@/shared/lib/canvas/use-canvas-translations';
+import { getMediaDisplayUrl } from '@/shared/lib/media-url';
 import { cn } from '@/shared/lib/utils';
 import type { AssetItem } from '@/shared/blocks/common/asset-picker-dialog';
 
@@ -398,7 +399,9 @@ export function CanvasMediaControl({
                 className="block h-full w-full cursor-zoom-in"
               >
                 <img
-                  src={currentMedia.thumbnailUrl || currentMedia.url}
+                  src={getMediaDisplayUrl(
+                    currentMedia.thumbnailUrl || currentMedia.url
+                  )}
                   alt={displayTitle}
                   className="h-full w-full object-cover"
                 />
@@ -408,7 +411,7 @@ export function CanvasMediaControl({
             )
           ) : currentMedia?.url ? (
             <video
-              src={currentMedia.url}
+              src={getMediaDisplayUrl(currentMedia.url)}
               controls
               muted
               playsInline
