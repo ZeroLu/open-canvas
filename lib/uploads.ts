@@ -6,6 +6,7 @@ import {
   validateProviderSettings,
 } from '@/lib/provider-settings';
 import { getStorageManagerFromSettings } from '@/lib/storage';
+import type { ProviderSettings } from '@/lib/types';
 
 export interface UploadedMediaPayload {
   url: string;
@@ -64,10 +65,12 @@ export async function uploadCanvasMedia({
   request,
   mediaType,
   maxSizeBytes,
+  settingsOverride,
 }: {
   request: Request;
   mediaType: 'image' | 'video';
   maxSizeBytes: number;
+  settingsOverride?: ProviderSettings | null;
 }): Promise<UploadedMediaPayload> {
   let formData: FormData;
   try {
@@ -76,23 +79,27 @@ export async function uploadCanvasMedia({
     throw new Error('Invalid multipart form-data body');
   }
 
-  const settings = normalizeProviderSettings({
-    cyberbaraApiKey: String(formData.get('cyberbaraApiKey') || ''),
-    cyberbaraBaseUrl: String(formData.get('cyberbaraBaseUrl') || ''),
-    storageProvider: String(formData.get('storageProvider') || '') as
-      | 'disabled'
-      | 's3-compatible'
-      | 'cyberbara',
-    storageS3Endpoint: String(formData.get('storageS3Endpoint') || ''),
-    storageS3Region: String(formData.get('storageS3Region') || ''),
-    storageS3AccessKeyId: String(formData.get('storageS3AccessKeyId') || ''),
-    storageS3SecretAccessKey: String(
-      formData.get('storageS3SecretAccessKey') || ''
-    ),
-    storageS3Bucket: String(formData.get('storageS3Bucket') || ''),
-    storageS3PublicDomain: String(formData.get('storageS3PublicDomain') || ''),
-    storageS3PathPrefix: String(formData.get('storageS3PathPrefix') || ''),
-  });
+  const settings = normalizeProviderSettings(
+    settingsOverride || {
+      cyberbaraApiKey: String(formData.get('cyberbaraApiKey') || ''),
+      cyberbaraBaseUrl: String(formData.get('cyberbaraBaseUrl') || ''),
+      storageProvider: String(formData.get('storageProvider') || '') as
+        | 'disabled'
+        | 's3-compatible'
+        | 'cyberbara',
+      storageS3Endpoint: String(formData.get('storageS3Endpoint') || ''),
+      storageS3Region: String(formData.get('storageS3Region') || ''),
+      storageS3AccessKeyId: String(formData.get('storageS3AccessKeyId') || ''),
+      storageS3SecretAccessKey: String(
+        formData.get('storageS3SecretAccessKey') || ''
+      ),
+      storageS3Bucket: String(formData.get('storageS3Bucket') || ''),
+      storageS3PublicDomain: String(
+        formData.get('storageS3PublicDomain') || ''
+      ),
+      storageS3PathPrefix: String(formData.get('storageS3PathPrefix') || ''),
+    }
+  );
 
   const validation = validateProviderSettings(settings);
   if (!validation.success) {

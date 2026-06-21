@@ -10,15 +10,15 @@ The goal is straightforward:
 - let users bring their own API keys
 - make the workflow runnable on a local machine without Cyberbara auth, credits, or database setup
 
-## What this MVP already does
+## What this alpha already does
 
-- local-first canvas UI built with React Flow
-- note, text, image, and video nodes
-- browser-local API key storage for `OpenRouter`, `Replicate`, and `Cyberbara`
-- multiple browser-local canvases
+- a canvas list page plus a studio page that now runs the real `CanvasStudioShell` extracted from the main app
+- note, text, image, video, and audio node types in the shared canvas graph model
+- `Cyberbara`, `OpenRouter`, and `Replicate` provider support through a local BYOK settings form
+- multiple local canvases backed by a JSON file on disk
 - export and import as JSON
-- upstream node output is injected into downstream execution
-- storage-backed image and video uploads for canvas nodes
+- upstream node output injected into downstream execution
+- Cyberbara or storage-backed image and video uploads for canvas nodes
 
 ## Provider model
 
@@ -66,14 +66,14 @@ This is designed to work with any S3-compatible backend, including self-hosted o
 
 ## Local persistence
 
-The app is local-first.
+The app is local-first, but the persistence model is now closer to the main product shell.
 
-- all provider settings are saved in browser local storage
-- all canvases are saved in browser local storage
-- the workspace key is `open-canvas/workspace/v1`
-- older single-canvas saves in `open-canvas/v1` are migrated on load
+- canvases and run records are stored in `data/open-canvas-db.json`
+- provider settings are saved through the in-app `Providers` form and mirrored into a local cookie for server routes
+- the root route `/` and `/canvas` both open the local canvas list page
+- each imported JSON file creates a brand new local canvas instead of overwriting an existing one
 
-You can create multiple canvases from the left sidebar. Export saves the active canvas as JSON. Importing a JSON file creates a new local canvas instead of overwriting the current one.
+You can create, rename, delete, and open multiple canvases from the list page or the in-studio `Canvases` dialog. Export is available from the studio page. Import is available from both the list page and the studio page.
 
 ## Run locally
 
@@ -84,7 +84,9 @@ pnpm dev
 
 Open `http://localhost:3000`.
 
-Then open the provider settings form in the left sidebar and save what you need:
+The first screen is the canvas list page. From there you can create a canvas or import an existing JSON export.
+
+Inside a canvas, open the `Providers` button and save what you need:
 
 - `Cyberbara API Key` for Cyberbara text, image, video, and upload flows
 - `OpenRouter API Key` if you want text nodes to run on OpenRouter instead
@@ -96,7 +98,7 @@ The form validates provider values before saving:
 - invalid URLs are rejected
 - `Cyberbara API Key` is required when Cyberbara uploads are enabled
 - S3 endpoint, access key, secret key, and bucket are required when storage is enabled
-- saved values are persisted in browser local storage
+- saved values are also written to a local cookie so the server-side execution routes can read them
 
 If you leave storage disabled, upload buttons stay unavailable because no storage provider can accept the file.
 
@@ -156,15 +158,14 @@ The canvas applies these rules:
 
 ## Why this shape
 
-The current Cyberbara canvas is tightly coupled to:
+The production Cyberbara canvas is tightly coupled to auth, cloud persistence, moderation, credit accounting, and task orchestration.
 
-- app auth
-- database persistence
-- moderation
-- credit accounting
-- Cyberbara task orchestration
+This repo takes a different stance:
 
-That is correct for the product, but it blocks open-source adoption. This repo takes the opposite approach: keep the canvas shell thin, keep execution adapters replaceable, and keep user secrets local by default.
+- keep the real studio shell experience where possible
+- replace hosted persistence with a local JSON store
+- keep provider adapters replaceable
+- keep user secrets local by default
 
 ## Publishing
 

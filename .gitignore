@@ -7,3 +7,4 @@ node_modules
 *.log
 tsconfig.tsbuildinfo
 .vercel
+data
