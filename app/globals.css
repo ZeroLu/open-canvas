@@ -12,6 +12,8 @@ html,
 body {
   margin: 0;
   min-height: 100%;
+  overflow-x: hidden;
+  width: 100%;
   background: #0b0d10;
   color: #f3f4f6;
   font-family:
@@ -33,4 +35,85 @@ textarea {
 
 .react-flow__attribution {
   display: none;
+}
+
+.landing-hero-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at center, black 38%, transparent 78%);
+}
+
+.landing-canvas-grid {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+  background-size: 20px 20px;
+  scrollbar-width: none;
+}
+
+.landing-canvas-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.landing-glow-button {
+  position: relative;
+}
+
+.landing-glow-button::before {
+  background: linear-gradient(45deg, #7c3aed, #2563eb, #ec4899);
+  border-radius: inherit;
+  content: "";
+  filter: blur(10px);
+  inset: -2px;
+  opacity: 0;
+  position: absolute;
+  transition: opacity 0.25s ease;
+  z-index: -1;
+}
+
+.landing-glow-button:hover::before {
+  opacity: 0.62;
+}
+
+.landing-marquee {
+  animation: landing-marquee 30s linear infinite;
+}
+
+.landing-fade-up {
+  animation: landing-fade-up 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+.landing-delay-100 {
+  animation-delay: 100ms;
+}
+
+.landing-delay-200 {
+  animation-delay: 200ms;
+}
+
+.landing-delay-300 {
+  animation-delay: 300ms;
+}
+
+@keyframes landing-marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes landing-fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

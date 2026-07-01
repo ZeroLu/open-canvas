@@ -1,0 +1,26 @@
+name = "open-canvas"
+account_id = "42ee55a9eb85d0611651f2eb4bfcbb5d"
+main = ".open-next/worker.js"
+workers_dev = true
+compatibility_date = "2025-03-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+binding = "ASSETS"
+directory = ".open-next/assets"
+
+[observability]
+enabled = true
+
+[[kv_namespaces]]
+binding = "OPEN_CANVAS_KV"
+id = "8549d54214c24e6d8583bf88d28dbcbb"
+
+[vars]
+NEXT_PUBLIC_APP_URL = "https://open-canvas.cyberbara.com"
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+NEXT_PRIVATE_MINIMAL_MODE = "1"
+
+[[routes]]
+pattern = "open-canvas.cyberbara.com"
+custom_domain = true

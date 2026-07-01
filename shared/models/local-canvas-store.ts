@@ -1,7 +1,9 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
+import { readCanvasClientIdFromCookie } from '@/lib/canvas-client-id';
 import {
   applyCanvasNodePatch,
   createEmptyCanvasGraph,
@@ -21,8 +23,23 @@ type LocalCanvasDatabase = {
   runs: CanvasNodeRunRecord[];
 };
 
+type CanvasKvNamespace = {
+  get<T = unknown>(
+    key: string,
+    options?: {
+      type: 'json';
+    }
+  ): Promise<T | null>;
+  put(key: string, value: string): Promise<void>;
+};
+
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'open-canvas-db.json');
+const FILE_PERSISTENCE_UNAVAILABLE =
+  'File-backed canvas persistence is not available in this runtime.';
+const CANVAS_CLIENT_ID_UNAVAILABLE =
+  'Canvas storage identity is missing. Refresh the page and try again.';
+const OPEN_CANVAS_KV_BINDING = 'OPEN_CANVAS_KV';
 
 function nowIso() {
   return new Date().toISOString();
@@ -57,45 +74,113 @@ function createEmptyDb(): LocalCanvasDatabase {
   };
 }
 
-async function ensureDbFile() {
-  await mkdir(DATA_DIR, { recursive: true });
+async function getCanvasStorage():
+  Promise<
+    | {
+        type: 'kv';
+        kv: CanvasKvNamespace;
+        key: string;
+      }
+    | {
+        type: 'file';
+      }
+    | {
+        type: 'missing-client-id';
+      }
+  > {
   try {
-    await readFile(DB_FILE, 'utf8');
+    const context = await getCloudflareContext({ async: true });
+    const env = context.env as Record<string, unknown>;
+    const kv = env[OPEN_CANVAS_KV_BINDING] as CanvasKvNamespace | undefined;
+
+    if (kv) {
+      const clientId = await readCanvasClientIdFromCookie();
+
+      if (!clientId) {
+        return {
+          type: 'missing-client-id',
+        };
+      }
+
+      return {
+        type: 'kv',
+        kv,
+        key: `canvas-db:${clientId}`,
+      };
+    }
   } catch {
+    // Local Next.js development has no Cloudflare request context.
+  }
+
+  return {
+    type: 'file',
+  };
+}
+
+async function ensureDbFile() {
+  try {
+    await mkdir(DATA_DIR, { recursive: true });
+    await readFile(DB_FILE, 'utf8');
+  } catch (error) {
+    if (isFileSystemUnavailableError(error)) {
+      throw error;
+    }
+
     await writeDb(createEmptyDb());
   }
 }
 
 async function readDb(): Promise<LocalCanvasDatabase> {
-  await ensureDbFile();
+  const storage = await getCanvasStorage();
+
+  if (storage.type === 'kv') {
+    const parsed = await storage.kv.get<Partial<LocalCanvasDatabase>>(
+      storage.key,
+      {
+        type: 'json',
+      }
+    );
+    return normalizeDb(parsed);
+  }
+
+  if (storage.type === 'missing-client-id') {
+    return createEmptyDb();
+  }
+
   try {
+    await ensureDbFile();
     const raw = await readFile(DB_FILE, 'utf8');
     const parsed = JSON.parse(raw) as Partial<LocalCanvasDatabase>;
-    const canvases = Array.isArray(parsed.canvases)
-      ? parsed.canvases.map((canvas) => {
-          const graph = normalizeCanvasGraph(canvas.graph);
-          return {
-            ...canvas,
-            graph,
-            preview: summarizeCanvasGraph(graph),
-          };
-        })
-      : [];
-    return {
-      version: 1,
-      canvases,
-      runs: Array.isArray(parsed.runs) ? parsed.runs : [],
-    };
+    return normalizeDb(parsed);
   } catch {
     return createEmptyDb();
   }
 }
 
 async function writeDb(db: LocalCanvasDatabase) {
-  await mkdir(DATA_DIR, { recursive: true });
-  const tempFile = `${DB_FILE}.${process.pid}.${Date.now()}.tmp`;
-  await writeFile(tempFile, JSON.stringify(db, null, 2), 'utf8');
-  await rename(tempFile, DB_FILE);
+  const storage = await getCanvasStorage();
+
+  if (storage.type === 'kv') {
+    await storage.kv.put(storage.key, JSON.stringify(normalizeDb(db)));
+    return;
+  }
+
+  if (storage.type === 'missing-client-id') {
+    throw new Error(CANVAS_CLIENT_ID_UNAVAILABLE);
+  }
+
+  try {
+    await mkdir(DATA_DIR, { recursive: true });
+    const tempFile = `${DB_FILE}.${process.pid}.${Date.now()}.tmp`;
+    await writeFile(tempFile, JSON.stringify(db, null, 2), 'utf8');
+    await rename(tempFile, DB_FILE);
+  } catch (error) {
+    if (isFileSystemUnavailableError(error)) {
+      throw new Error(FILE_PERSISTENCE_UNAVAILABLE);
+    }
+
+    throw error;
+  }
 }
 
 async function updateDb<T>(updater: (db: LocalCanvasDatabase) => T | Promise<T>) {
@@ -105,12 +190,41 @@ async function updateDb<T>(updater: (db: LocalCanvasDatabase) => T | Promise<T>)
   return result;
 }
 
+function normalizeDb(
+  parsed: Partial<LocalCanvasDatabase> | null | undefined
+): LocalCanvasDatabase {
+  const canvases = Array.isArray(parsed?.canvases)
+    ? parsed.canvases.map((canvas) => {
+        const graph = normalizeCanvasGraph(canvas.graph);
+        return {
+          ...canvas,
+          graph,
+          preview: summarizeCanvasGraph(graph),
+        };
+      })
+    : [];
+
+  return {
+    version: 1,
+    canvases,
+    runs: Array.isArray(parsed?.runs) ? parsed.runs : [],
+  };
+}
+
 function sortCanvases(canvases: CanvasDocumentSummary[]) {
   return [...canvases].sort((a, b) => {
     const left = new Date(b.updatedAt || b.createdAt || 0).getTime();
     const right = new Date(a.updatedAt || a.createdAt || 0).getTime();
     return left - right;
   });
+}
+
+function isFileSystemUnavailableError(error: unknown) {
+  return (
+    error instanceof Error &&
+    (error.message.includes('not implemented') ||
+      error.message.includes('operation is not supported'))
+  );
 }
 
 export async function ensureLocalCanvasDocument() {

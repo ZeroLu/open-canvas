@@ -1,15 +1,17 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ArrowRight,
   Clock3,
   FilePenLine,
   MoreHorizontal,
   Plus,
+  Settings,
   Trash2,
   Type,
   Upload,
+  WandSparkles,
   Workflow,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -28,6 +30,12 @@ import {
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
 import { Input } from '@/shared/components/ui/input';
+import {
+  ONBOARDING_LOCAL_STORAGE_KEY,
+  OnboardingWizard,
+  ProviderSettingsDialog,
+  readProviderSettingsFromLocalStorage,
+} from '@/components/provider-settings-dialog';
 import type {
   CanvasDocumentSummary,
   CanvasPreviewSummary,
@@ -136,7 +144,25 @@ export function CanvasListPage({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftTitle, setDraftTitle] = useState('');
   const [pendingIds, setPendingIds] = useState<Record<string, boolean>>({});
+  const [isProviderDialogOpen, setIsProviderDialogOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    const onboardingState = window.localStorage.getItem(
+      ONBOARDING_LOCAL_STORAGE_KEY
+    );
+    const settings = readProviderSettingsFromLocalStorage();
+    const hasKey = Boolean(
+      settings.openrouterApiKey.trim() ||
+        settings.replicateApiToken.trim() ||
+        settings.cyberbaraApiKey.trim()
+    );
+
+    if (!onboardingState && !hasKey) {
+      setIsOnboardingOpen(true);
+    }
+  }, []);
 
   const refreshCanvases = async () => {
     const response = await fetch('/api/canvas');
@@ -284,6 +310,14 @@ export function CanvasListPage({
         className="hidden"
         onChange={handleImportCanvas}
       />
+      <ProviderSettingsDialog
+        open={isProviderDialogOpen}
+        onOpenChange={setIsProviderDialogOpen}
+      />
+      <OnboardingWizard
+        open={isOnboardingOpen}
+        onOpenChange={setIsOnboardingOpen}
+      />
       <div className="mx-auto max-w-7xl px-6 py-10">
         <div className="mt-10 flex flex-col gap-4 rounded-[24px] border border-white/10 bg-black px-6 py-8 shadow-2xl shadow-black/30 md:flex-row md:items-end md:justify-between">
           <div className="space-y-3">
@@ -299,6 +333,24 @@ export function CanvasListPage({
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-white/10 bg-transparent text-white hover:bg-white/10"
+              onClick={() => setIsProviderDialogOpen(true)}
+            >
+              <Settings className="size-4" />
+              Providers
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="border-white/10 bg-transparent text-white hover:bg-white/10"
+              onClick={() => setIsOnboardingOpen(true)}
+            >
+              <WandSparkles className="size-4" />
+              Setup guide
+            </Button>
             {canvases[0] ? (
               <Button
                 type="button"

@@ -1,9 +1,5 @@
-export const dynamic = 'force-dynamic';
-
-import { CanvasListPage } from '@/components/canvas-list-page';
-import { listLocalCanvasDocuments } from '@/shared/models/local-canvas-store';
+import { LandingPage } from '@/components/landing-page';
 
 export default async function HomePage() {
-  const canvases = await listLocalCanvasDocuments();
-  return <CanvasListPage initialCanvases={canvases} />;
+  return <LandingPage />;
 }
