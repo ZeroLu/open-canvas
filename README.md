@@ -1,3 +1,7 @@
+<img width="2586" height="1290" alt="image" src="https://github.com/user-attachments/assets/aa3b0b86-18ea-436e-8541-224571f2f680" />
+<img width="2340" height="1398" alt="image" src="https://github.com/user-attachments/assets/96697e17-55cc-444b-8cba-708bd2c9a633" />
+
+
 # Open Canvas
 
 `Open Canvas` is a local-first workflow canvas extracted from the direction of Cyberbara's internal canvas.
