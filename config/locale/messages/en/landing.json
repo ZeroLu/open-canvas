@@ -1,0 +1,84 @@
+{
+  "nav": {
+    "howItWorks": "How it works",
+    "providers": "Providers",
+    "quickStart": "Quick start",
+    "launch": "Launch app",
+    "language": "简体中文"
+  },
+  "hero": {
+    "badge": "100% open-source alternative",
+    "badgeShort": "Open-source alternative",
+    "title": "The infinite AI canvas,",
+    "titleAccent": "fully unlocked.",
+    "subtitle": "Break free from locked-in ecosystems like TapNow, LibTV, and Higgsfield. Bring your own key and generate, manipulate, and direct images and videos on a spatial workspace.",
+    "primaryCta": "Start creating",
+    "githubCta": "Star on GitHub"
+  },
+  "preview": {
+    "back": "Back",
+    "workspace": "Canvas Studio",
+    "title": "Group Photo FPV Shot Template",
+    "saving": "Saving",
+    "share": "Share",
+    "imageNode": "Image Node",
+    "videoNode": "Video Node"
+  },
+  "providers": {
+    "eyebrow": "Connect any API. Zero platform lock-in."
+  },
+  "how": {
+    "title": "How Open Canvas works",
+    "subtitle": "A visual workspace built for multi-modal AI. No locked credit system, no hidden workflow format, no single-provider ceiling.",
+    "steps": [
+      {
+        "title": "1. Bring your own key",
+        "body": "Connect OpenAI, Gemini, OpenRouter, Replicate, or Cyberbara. You keep provider access and billing in your own account."
+      },
+      {
+        "title": "2. Add nodes",
+        "body": "Place text, image, video, and generation nodes on a spatial canvas so your creative workflow stays visible."
+      },
+      {
+        "title": "3. Connect and generate",
+        "body": "Turn one output into the next input. Compose multi-model image and video pipelines without locking work into one platform."
+      }
+    ]
+  },
+  "quick": {
+    "title": "Quick start",
+    "subtitle": "Use the hosted app when you want speed. Self-host when you want complete control.",
+    "hostedTitle": "Hosted web app",
+    "hostedBody": "The fastest way to try Open Canvas. Use the Cyberbara-hosted app, keep your workflow in the browser, and bring your own API keys.",
+    "hostedCta": "Launch web app",
+    "selfHostedTitle": "Self-hosted with AI",
+    "selfHostedBody": "Ask your desktop AI agent to install and run the project locally. It can read the repository, install dependencies, and start the app for you.",
+    "promptLabel": "# Send this command to your AI agent:",
+    "promptText": "Setup and run Open Canvas on the desktop for me. Read"
+  },
+  "faq": {
+    "title": "Frequently asked questions",
+    "items": [
+      {
+        "question": "What is BYOK?",
+        "answer": "BYOK means Bring Your Own Key. Instead of buying platform credits, you paste your provider API keys and pay the provider directly for the generations you run."
+      },
+      {
+        "question": "Is Open Canvas free?",
+        "answer": "Yes. The product is open source and the hosted app is free to use. Your only generation cost is whatever your selected AI provider charges for API usage."
+      },
+      {
+        "question": "Can I self-host it?",
+        "answer": "Yes. You can run Open Canvas locally or deploy your own copy. Canvas JSON import and export keeps your work portable."
+      },
+      {
+        "question": "Are my API keys safe in the hosted app?",
+        "answer": "Your keys are configured in your browser and used for provider requests. For the strictest control, run the same open-source app locally or on your own infrastructure."
+      }
+    ]
+  },
+  "footer": {
+    "builtBy": "Built by",
+    "openSource": ". Fully open source."
+  }
+}

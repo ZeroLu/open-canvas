@@ -14,11 +14,11 @@ import {
   WandSparkles,
   Workflow,
 } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import { toast } from 'sonner';
 
 import { importCanvasFromJsonFile } from '@/lib/canvas-json';
+import { Link, useRouter } from '@/i18n/navigation';
 import { LazyVideo } from '@/shared/blocks/common/lazy-video';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
@@ -40,15 +40,24 @@ import type {
   CanvasDocumentSummary,
   CanvasPreviewSummary,
 } from '@/shared/lib/canvas/types';
+import {
+  canvasT,
+  localizeCanvasTitle,
+} from '@/shared/lib/canvas/i18n';
+import { useCanvasTranslations } from '@/shared/lib/canvas/use-canvas-translations';
 
-function formatRelativeDate(value: string | null) {
+function formatRelativeDate(
+  value: string | null,
+  t: ReturnType<typeof useCanvasTranslations>,
+  locale: string
+) {
   if (!value) {
-    return 'Just now';
+    return canvasT(t, 'list.justNow');
   }
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return 'Just now';
+    return canvasT(t, 'list.justNow');
   }
 
   const diffMs = Date.now() - date.getTime();
@@ -57,18 +66,22 @@ function formatRelativeDate(value: string | null) {
   const dayMs = 24 * hourMs;
 
   if (diffMs < minuteMs) {
-    return 'Just now';
+    return canvasT(t, 'list.justNow');
   }
 
   if (diffMs < hourMs) {
-    return `${Math.max(1, Math.floor(diffMs / minuteMs))}m ago`;
+    return canvasT(t, 'list.minutesAgo', {
+      count: Math.max(1, Math.floor(diffMs / minuteMs)),
+    });
   }
 
   if (diffMs < dayMs) {
-    return `${Math.max(1, Math.floor(diffMs / hourMs))}h ago`;
+    return canvasT(t, 'list.hoursAgo', {
+      count: Math.max(1, Math.floor(diffMs / hourMs)),
+    });
   }
 
-  return date.toLocaleDateString('en', {
+  return date.toLocaleDateString(locale === 'zh' ? 'zh-CN' : 'en', {
     month: 'short',
     day: 'numeric',
     year:
@@ -79,7 +92,7 @@ function formatRelativeDate(value: string | null) {
 function renderCanvasHero(canvas: {
   title: string;
   preview: CanvasPreviewSummary;
-}) {
+}, t: ReturnType<typeof useCanvasTranslations>) {
   if (
     canvas.preview.heroMedia?.url &&
     canvas.preview.heroNodeType === 'image'
@@ -126,7 +139,7 @@ function renderCanvasHero(canvas: {
       <div className="space-y-2">
         <p className="text-sm font-medium text-white/85">{canvas.title}</p>
         <p className="text-sm text-white/55">
-          Local-first workflow graph with BYOK execution.
+          {canvasT(t, 'list.heroDescription')}
         </p>
       </div>
     </div>
@@ -139,6 +152,8 @@ export function CanvasListPage({
   initialCanvases: CanvasDocumentSummary[];
 }) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useCanvasTranslations();
   const [canvases, setCanvases] = useState(initialCanvases);
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -168,7 +183,7 @@ export function CanvasListPage({
     const response = await fetch('/api/canvas');
     const json = await response.json();
     if (!response.ok || json.code !== 0 || !json.data?.items) {
-      throw new Error(json.message || 'Failed to load canvases');
+      throw new Error(json.message || canvasT(t, 'toast.reloadCanvasFailed'));
     }
 
     setCanvases(json.data.items as CanvasDocumentSummary[]);
@@ -187,7 +202,7 @@ export function CanvasListPage({
 
       const json = await response.json();
       if (!response.ok || json.code !== 0 || !json.data?.canvas) {
-        throw new Error(json.message || 'Failed to create canvas');
+        throw new Error(json.message || canvasT(t, 'toast.createCanvasFailed'));
       }
 
       const nextCanvas = json.data.canvas as CanvasDocumentSummary;
@@ -195,7 +210,7 @@ export function CanvasListPage({
       router.push(`/canvas/${nextCanvas.id}`);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Failed to create canvas'
+        error instanceof Error ? error.message : canvasT(t, 'toast.createCanvasFailed')
       );
     } finally {
       setIsCreating(false);
@@ -215,7 +230,7 @@ export function CanvasListPage({
   const handleRename = async (canvas: CanvasDocumentSummary) => {
     const nextTitle = draftTitle.trim();
     if (!nextTitle) {
-      toast.error('Canvas title is required.');
+      toast.error(canvasT(t, 'toast.canvasTitleRequired'));
       return;
     }
 
@@ -236,7 +251,7 @@ export function CanvasListPage({
 
       const json = await response.json();
       if (!response.ok || json.code !== 0 || !json.data?.canvas) {
-        throw new Error(json.message || 'Failed to rename canvas');
+        throw new Error(json.message || canvasT(t, 'toast.renameCanvasFailed'));
       }
 
       const updatedCanvas = json.data.canvas as CanvasDocumentSummary;
@@ -244,10 +259,10 @@ export function CanvasListPage({
         current.map((item) => (item.id === updatedCanvas.id ? updatedCanvas : item))
       );
       cancelRename();
-      toast.success('Canvas renamed.');
+      toast.success(canvasT(t, 'toast.renameCanvasSuccess'));
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Failed to rename canvas'
+        error instanceof Error ? error.message : canvasT(t, 'toast.renameCanvasFailed')
       );
     } finally {
       setPendingIds((current) => ({ ...current, [canvas.id]: false }));
@@ -255,7 +270,13 @@ export function CanvasListPage({
   };
 
   const handleDelete = async (canvas: CanvasDocumentSummary) => {
-    if (!window.confirm(`Delete "${canvas.title}"?`)) {
+    if (
+      !window.confirm(
+        canvasT(t, 'list.deleteConfirm', {
+          title: localizeCanvasTitle(t, canvas.title),
+        })
+      )
+    ) {
       return;
     }
 
@@ -266,14 +287,14 @@ export function CanvasListPage({
       });
       const json = await response.json();
       if (!response.ok || json.code !== 0) {
-        throw new Error(json.message || 'Failed to delete canvas');
+        throw new Error(json.message || canvasT(t, 'toast.deleteCanvasFailed'));
       }
 
       await refreshCanvases();
-      toast.success('Canvas deleted.');
+      toast.success(canvasT(t, 'toast.deleteCanvasSuccess'));
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Failed to delete canvas'
+        error instanceof Error ? error.message : canvasT(t, 'toast.deleteCanvasFailed')
       );
     } finally {
       setPendingIds((current) => ({ ...current, [canvas.id]: false }));
@@ -296,7 +317,9 @@ export function CanvasListPage({
       router.push(`/canvas/${result.canvasId}`);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Failed to import canvas JSON'
+        error instanceof Error
+          ? error.message
+          : canvasT(t, 'toast.importFileFailed', { name: file.name })
       );
     }
   };
@@ -322,13 +345,12 @@ export function CanvasListPage({
         <div className="mt-10 flex flex-col gap-4 rounded-[24px] border border-white/10 bg-black px-6 py-8 shadow-2xl shadow-black/30 md:flex-row md:items-end md:justify-between">
           <div className="space-y-3">
             <Badge className="bg-white/10 text-white hover:bg-white/10">
-              Canvas
+              {canvasT(t, 'common.canvas')}
             </Badge>
             <div className="space-y-2">
-              <h1 className="text-3xl font-semibold md:text-4xl">Open Canvas</h1>
+              <h1 className="text-3xl font-semibold md:text-4xl">{canvasT(t, 'list.title')}</h1>
               <p className="max-w-2xl text-sm text-white/70 md:text-base">
-                Pick up a local canvas, create a new one, and move into the full
-                Cyberbara-style workflow editor.
+                {canvasT(t, 'list.subtitle')}
               </p>
             </div>
           </div>
@@ -340,7 +362,7 @@ export function CanvasListPage({
               onClick={() => setIsProviderDialogOpen(true)}
             >
               <Settings className="size-4" />
-              Providers
+              {canvasT(t, 'common.settings')}
             </Button>
             <Button
               type="button"
@@ -349,16 +371,18 @@ export function CanvasListPage({
               onClick={() => setIsOnboardingOpen(true)}
             >
               <WandSparkles className="size-4" />
-              Setup guide
+              {canvasT(t, 'list.setupGuide')}
             </Button>
             {canvases[0] ? (
               <Button
                 type="button"
                 variant="outline"
                 className="border-white/10 bg-transparent text-white hover:bg-white/10"
-                onClick={() => router.push(`/canvas/${canvases[0].id}`)}
+                onClick={() =>
+                  router.push(`/canvas/${canvases[0].id}`)
+                }
               >
-                Latest canvas
+                {canvasT(t, 'list.latestCanvas')}
               </Button>
             ) : null}
             <Button
@@ -368,7 +392,7 @@ export function CanvasListPage({
               onClick={() => fileInputRef.current?.click()}
             >
               <Upload className="size-4" />
-              Import JSON
+              {canvasT(t, 'list.importJson')}
             </Button>
             <Button
               type="button"
@@ -377,7 +401,7 @@ export function CanvasListPage({
               disabled={isCreating}
             >
               <Plus className="size-4" />
-              {isCreating ? 'Creating...' : 'New canvas'}
+              {isCreating ? canvasT(t, 'list.creating') : canvasT(t, 'list.newCanvas')}
             </Button>
           </div>
         </div>
@@ -387,9 +411,9 @@ export function CanvasListPage({
             <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-white/5">
               <Workflow className="size-7 text-white/75" />
             </div>
-            <h2 className="mt-5 text-xl font-semibold">No canvases yet</h2>
+            <h2 className="mt-5 text-xl font-semibold">{canvasT(t, 'list.emptyTitle')}</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-white/60">
-              Create your first local canvas and start building a workflow.
+              {canvasT(t, 'list.emptyDescription')}
             </p>
             <Button
               type="button"
@@ -398,7 +422,7 @@ export function CanvasListPage({
               className="mt-6 bg-white text-black hover:bg-white/90"
             >
               <Plus className="size-4" />
-              Create first canvas
+              {canvasT(t, 'list.createFirstCanvas')}
             </Button>
           </div>
         ) : (
@@ -417,10 +441,18 @@ export function CanvasListPage({
                   <Link
                     href={`/canvas/${canvas.id}`}
                     className="block"
-                    aria-label={`Open ${canvas.title}`}
+                    aria-label={canvasT(t, 'list.openAria', {
+                      title: localizeCanvasTitle(t, canvas.title),
+                    })}
                   >
                     <div className="relative aspect-[16/10] overflow-hidden border-b border-white/10 bg-black">
-                      {renderCanvasHero(canvas)}
+                      {renderCanvasHero(
+                        {
+                          ...canvas,
+                          title: localizeCanvasTitle(t, canvas.title),
+                        },
+                        t
+                      )}
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black via-black/45 to-transparent" />
                     </div>
                   </Link>
@@ -453,7 +485,7 @@ export function CanvasListPage({
                                 disabled={isPending}
                                 className="bg-white text-black hover:bg-white/90"
                               >
-                                Save
+                                {canvasT(t, 'common.save')}
                               </Button>
                               <Button
                                 type="button"
@@ -463,18 +495,22 @@ export function CanvasListPage({
                                 disabled={isPending}
                                 className="border-white/10 bg-transparent text-white hover:bg-white/10"
                               >
-                                Cancel
+                                {canvasT(t, 'common.cancel')}
                               </Button>
                             </div>
                           </div>
                         ) : (
                           <>
                             <div className="truncate text-lg font-semibold">
-                              {canvas.title}
+                              {localizeCanvasTitle(t, canvas.title)}
                             </div>
                             <div className="mt-1 flex items-center gap-2 text-xs text-white/45">
                               <Clock3 className="size-3.5" />
-                              {formatRelativeDate(canvas.updatedAt || canvas.createdAt)}
+                              {formatRelativeDate(
+                                canvas.updatedAt || canvas.createdAt,
+                                t,
+                                locale
+                              )}
                             </div>
                           </>
                         )}
@@ -498,14 +534,14 @@ export function CanvasListPage({
                           >
                             <DropdownMenuItem onClick={() => beginRename(canvas)}>
                               <FilePenLine className="size-4" />
-                              Rename
+                              {canvasT(t, 'common.rename')}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               variant="destructive"
                               onClick={() => void handleDelete(canvas)}
                             >
                               <Trash2 className="size-4" />
-                              Delete
+                              {canvasT(t, 'common.delete')}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -514,19 +550,25 @@ export function CanvasListPage({
 
                     <div className="flex items-center justify-between text-sm text-white/55">
                       <span>
-                        {canvas.preview.nodeCount} nodes
+                        {canvasT(t, 'list.nodeCount', {
+                          count: canvas.preview.nodeCount,
+                        })}
                         {canvas.preview.imageCount > 0
-                          ? `, ${canvas.preview.imageCount} images`
+                          ? `, ${canvasT(t, 'list.imageCount', {
+                              count: canvas.preview.imageCount,
+                            })}`
                           : ''}
                         {canvas.preview.videoCount > 0
-                          ? `, ${canvas.preview.videoCount} videos`
+                          ? `, ${canvasT(t, 'list.videoCount', {
+                              count: canvas.preview.videoCount,
+                            })}`
                           : ''}
                       </span>
                       <Link
                         href={`/canvas/${canvas.id}`}
                         className="inline-flex items-center gap-1 text-white transition hover:text-white/75"
                       >
-                        Open
+                        {canvasT(t, 'common.open')}
                         <ArrowRight className="size-4" />
                       </Link>
                     </div>

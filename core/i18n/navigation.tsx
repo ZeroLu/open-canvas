@@ -1,4 +1,7 @@
-import Link, { type LinkProps } from 'next/link';
-
-export { Link };
-export type NavigationLinkProps = LinkProps;
+export {
+  Link,
+  getPathname,
+  redirect,
+  usePathname,
+  useRouter,
+} from '@/i18n/navigation';

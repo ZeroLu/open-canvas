@@ -2,10 +2,10 @@
 
 import { useRef } from 'react';
 import { Download, FileJson, Upload } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { exportCanvasToJson, importCanvasFromJsonFile } from '@/lib/canvas-json';
+import { useRouter } from '@/i18n/navigation';
 import { CanvasStudioShell } from '@/shared/blocks/canvas/canvas-studio-shell';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -14,6 +14,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
+import { canvasT } from '@/shared/lib/canvas/i18n';
+import { useCanvasTranslations } from '@/shared/lib/canvas/use-canvas-translations';
 import type { CanvasDocumentRecord } from '@/shared/lib/canvas/types';
 
 export function OpenCanvasShell({
@@ -22,15 +24,16 @@ export function OpenCanvasShell({
   initialCanvas: CanvasDocumentRecord;
 }) {
   const router = useRouter();
+  const t = useCanvasTranslations();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleExportCanvas = async () => {
     try {
       await exportCanvasToJson(initialCanvas.id);
-      toast.success('Canvas exported as JSON.');
+      toast.success(canvasT(t, 'toast.exportCanvasSuccess'));
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Failed to export canvas'
+        error instanceof Error ? error.message : canvasT(t, 'toast.exportCanvasFailed')
       );
     }
   };
@@ -46,12 +49,14 @@ export function OpenCanvasShell({
 
     try {
       const result = await importCanvasFromJsonFile(file);
-      toast.success(`Imported "${result.title}".`);
+      toast.success(canvasT(t, 'toast.importCanvasSuccess', { title: result.title }));
       router.push(`/canvas/${result.canvasId}`);
       router.refresh();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Failed to import canvas JSON'
+        error instanceof Error
+          ? error.message
+          : canvasT(t, 'toast.importFileFailed', { name: file.name })
       );
     }
   };
@@ -77,7 +82,7 @@ export function OpenCanvasShell({
               className="border-white/10 bg-black/80 text-white backdrop-blur hover:bg-black"
             >
               <FileJson className="size-4" />
-              File
+              {canvasT(t, 'common.file')}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -86,11 +91,11 @@ export function OpenCanvasShell({
           >
             <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
               <Upload className="size-4" />
-              Import JSON
+              {canvasT(t, 'common.importJson')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => void handleExportCanvas()}>
               <Download className="size-4" />
-              Export JSON
+              {canvasT(t, 'common.exportJson')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

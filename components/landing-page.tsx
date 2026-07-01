@@ -24,8 +24,10 @@ import {
   Workflow,
 } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { useLocale, useTranslations } from 'next-intl';
 import type React from 'react';
+
+import { Link } from '@/i18n/navigation';
 
 const githubUrl = 'https://github.com/ZeroLu/open-canvas';
 
@@ -49,47 +51,18 @@ const canvasPreviewImages = {
   video: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=720&q=85',
 };
 
-const steps = [
+const stepStyles = [
   {
     icon: KeyRound,
-    title: '1. Bring your own key',
-    body: 'Connect OpenAI, Gemini, OpenRouter, Replicate, or Cyberbara. You keep provider access and billing in your own account.',
     tone: 'text-[#a78bfa] border-[#a78bfa]/25 bg-[#a78bfa]/10',
   },
   {
     icon: Workflow,
-    title: '2. Add nodes',
-    body: 'Place text, image, video, and generation nodes on a spatial canvas so your creative workflow stays visible.',
     tone: 'text-[#5ea1ff] border-[#5ea1ff]/25 bg-[#5ea1ff]/10',
   },
   {
     icon: WandSparkles,
-    title: '3. Connect and generate',
-    body: 'Turn one output into the next input. Compose multi-model image and video pipelines without locking work into one platform.',
     tone: 'text-[#f472b6] border-[#f472b6]/25 bg-[#f472b6]/10',
-  },
-];
-
-const faqs = [
-  {
-    question: 'What is BYOK?',
-    answer:
-      'BYOK means Bring Your Own Key. Instead of buying platform credits, you paste your provider API keys and pay the provider directly for the generations you run.',
-  },
-  {
-    question: 'Is Open Canvas free?',
-    answer:
-      'Yes. The product is open source and the hosted app is free to use. Your only generation cost is whatever your selected AI provider charges for API usage.',
-  },
-  {
-    question: 'Can I self-host it?',
-    answer:
-      'Yes. You can run Open Canvas locally or deploy your own copy. Canvas JSON import and export keeps your work portable.',
-  },
-  {
-    question: 'Are my API keys safe in the hosted app?',
-    answer:
-      'Your keys are configured in your browser and used for provider requests. For the strictest control, run the same open-source app locally or on your own infrastructure.',
   },
 ];
 
@@ -109,7 +82,9 @@ const jsonLd = {
   },
 };
 
-function ProviderMarquee() {
+type LandingTranslator = ReturnType<typeof useTranslations>;
+
+function ProviderMarquee({ eyebrow }: { eyebrow: string }) {
   const repeated = [...providers, ...providers];
 
   return (
@@ -119,7 +94,7 @@ function ProviderMarquee() {
     >
       <div className="mx-auto mb-6 max-w-7xl px-5 text-center md:px-6">
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/48">
-          Connect any API. Zero platform lock-in.
+          {eyebrow}
         </p>
       </div>
       <div className="relative flex overflow-hidden">
@@ -182,20 +157,20 @@ function BrandLogo({
   );
 }
 
-function CanvasPreview() {
+function CanvasPreview({ t }: { t: LandingTranslator }) {
   return (
     <div className="relative mx-auto w-full max-w-6xl overflow-hidden rounded-2xl border border-white/10 bg-[#0c0c0c] shadow-2xl shadow-[#4c1d95]/25">
       <div className="absolute inset-x-0 top-0 z-20 flex h-14 items-center justify-between border-b border-white/8 bg-[#111111]/88 px-4 backdrop-blur">
         <div className="flex min-w-0 items-center gap-3">
           <div className="hidden items-center gap-2 text-sm font-medium text-white/52 sm:flex">
             <ArrowLeft className="size-4" />
-            Back
+            {t('preview.back')}
           </div>
           <div className="rounded-md border border-white/8 bg-white/[0.06] px-3 py-1 text-xs text-white/62">
-            Canvas Studio
+            {t('preview.workspace')}
           </div>
           <span className="hidden truncate text-sm font-semibold text-white md:block">
-            Group Photo FPV Shot Template
+            {t('preview.title')}
           </span>
         </div>
         <div className="flex items-center gap-2 text-xs text-white/52">
@@ -203,11 +178,11 @@ function CanvasPreview() {
           <span className="hidden sm:inline">2927</span>
           <div className="hidden items-center gap-2 rounded-full border border-white/8 bg-white/[0.06] px-3 py-1.5 md:flex">
             <Save className="size-3.5" />
-            Saving
+            {t('preview.saving')}
           </div>
           <button className="flex items-center gap-2 rounded-md border border-white/10 bg-white/10 px-3 py-1.5 text-white transition hover:bg-white/15">
             <Share2 className="size-3.5" />
-            Share
+            {t('preview.share')}
           </button>
         </div>
       </div>
@@ -252,7 +227,7 @@ function CanvasPreview() {
             <circle cx="750" cy="278" r="4" fill="#111" stroke="#888" strokeWidth="2" />
           </svg>
 
-          <CanvasNode title="Image Node" icon={ImageIcon}>
+          <CanvasNode title={t('preview.imageNode')} icon={ImageIcon}>
             <Image
               src={canvasPreviewImages.base}
               alt="Fashion portrait source image"
@@ -263,7 +238,7 @@ function CanvasPreview() {
             />
           </CanvasNode>
 
-          <CanvasNode title="Image Node" icon={ImageIcon} className="-translate-y-2">
+          <CanvasNode title={t('preview.imageNode')} icon={ImageIcon} className="-translate-y-2">
             <Image
               src={canvasPreviewImages.edit}
               alt="Stylized editorial image variation"
@@ -273,7 +248,7 @@ function CanvasPreview() {
             />
           </CanvasNode>
 
-          <CanvasNode title="Video Node" icon={Video} active>
+          <CanvasNode title={t('preview.videoNode')} icon={Video} active>
             <Image
               src={canvasPreviewImages.video}
               alt="Generated cinematic video preview"
@@ -332,6 +307,10 @@ function CanvasNode({
 }
 
 export function LandingPage() {
+  const t = useTranslations('landing');
+  const locale = useLocale();
+  const targetLocale = locale === 'zh' ? 'en' : 'zh';
+
   return (
     <main className="min-h-screen w-full overflow-x-hidden bg-[#0b0b0f] text-white selection:bg-[#8b5cf6] selection:text-white">
       <script
@@ -352,13 +331,13 @@ export function LandingPage() {
 
           <div className="hidden items-center gap-8 md:flex">
             <a href="#how-it-works" className="text-sm font-medium text-white/52 transition hover:text-white">
-              How it works
+              {t('nav.howItWorks')}
             </a>
             <a href="#providers" className="text-sm font-medium text-white/52 transition hover:text-white">
-              Providers
+              {t('nav.providers')}
             </a>
             <a href="#quick-start" className="text-sm font-medium text-white/52 transition hover:text-white">
-              Quick start
+              {t('nav.quickStart')}
             </a>
             <a
               href={githubUrl}
@@ -372,10 +351,18 @@ export function LandingPage() {
           </div>
 
           <Link
+            href="/"
+            locale={targetLocale}
+            className="hidden rounded-full border border-white/10 px-3 py-2 text-sm font-semibold text-white/62 transition hover:bg-white/10 hover:text-white sm:inline-flex"
+          >
+            {t('nav.language')}
+          </Link>
+
+          <Link
             href="/canvas"
             className="landing-glow-button inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-3 py-2.5 text-sm font-bold text-[#0b0b0f] transition hover:scale-[1.03] sm:px-4 md:px-6"
           >
-            <span className="hidden sm:inline">Launch app</span>
+            <span className="hidden sm:inline">{t('nav.launch')}</span>
             <ArrowRight className="size-4" />
           </Link>
         </div>
@@ -391,23 +378,21 @@ export function LandingPage() {
             className="landing-fade-up inline-flex max-w-[calc(100vw-40px)] items-center gap-2 rounded-full border border-[#8b5cf6]/30 bg-white/[0.03] px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-[#c4b5fd] backdrop-blur transition hover:bg-white/[0.06] sm:px-4 sm:tracking-[0.16em]"
           >
             <span className="size-2 rounded-full bg-[#8b5cf6] shadow-[0_0_10px_#8b5cf6]" />
-            <span className="truncate sm:hidden">Open-source alternative</span>
-            <span className="hidden sm:inline">100% open-source alternative</span>
+            <span className="truncate sm:hidden">{t('hero.badgeShort')}</span>
+            <span className="hidden sm:inline">{t('hero.badge')}</span>
             <ArrowRight className="size-3.5" />
           </a>
 
           <h1 className="landing-fade-up landing-delay-100 mx-auto mt-8 max-w-[22rem] text-4xl font-extrabold leading-[1.08] tracking-normal sm:max-w-5xl sm:text-5xl md:text-7xl">
-            The infinite AI canvas,
+            {t('hero.title')}
             <br className="hidden md:block" />
             <span className="bg-[linear-gradient(135deg,#fff,#a78bfa)] bg-clip-text text-transparent">
-              fully unlocked.
+              {t('hero.titleAccent')}
             </span>
           </h1>
 
           <p className="landing-fade-up landing-delay-200 mx-auto mt-6 max-w-[21rem] text-base leading-8 text-white/62 sm:max-w-3xl md:text-xl">
-            Break free from locked-in ecosystems like TapNow, LibTV, and Higgsfield.
-            Bring your own key and generate, manipulate, and direct images and videos
-            on a spatial workspace.
+            {t('hero.subtitle')}
           </p>
 
           <div className="landing-fade-up landing-delay-300 mx-auto mb-16 mt-10 flex max-w-[21rem] flex-col justify-center gap-4 sm:max-w-none sm:flex-row md:mb-20">
@@ -415,7 +400,7 @@ export function LandingPage() {
               href="#quick-start"
               className="landing-glow-button inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#7c3aed] px-6 py-4 text-base font-bold text-white shadow-[0_0_30px_rgba(124,58,237,0.35)] transition hover:bg-[#8b5cf6] sm:w-auto sm:px-8 sm:text-lg"
             >
-              Start creating
+              {t('hero.primaryCta')}
               <Rocket className="size-5" />
             </a>
             <a
@@ -425,42 +410,41 @@ export function LandingPage() {
               className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-6 py-4 text-base font-semibold text-white backdrop-blur transition hover:bg-white/10 sm:w-auto sm:px-8 sm:text-lg"
             >
               <Star className="size-5 fill-[#facc15] text-[#facc15]" />
-              Star on GitHub
+              {t('hero.githubCta')}
             </a>
           </div>
 
           <div className="landing-fade-up landing-delay-300">
-            <CanvasPreview />
+            <CanvasPreview t={t} />
           </div>
         </div>
       </section>
 
-      <ProviderMarquee />
+      <ProviderMarquee eyebrow={t('providers.eyebrow')} />
 
       <section id="how-it-works" className="relative z-10 py-24">
         <div className="mx-auto max-w-7xl px-5 md:px-6">
           <div className="mx-auto mb-16 max-w-3xl text-center">
-            <h2 className="text-3xl font-bold md:text-5xl">How Open Canvas works</h2>
+            <h2 className="text-3xl font-bold md:text-5xl">{t('how.title')}</h2>
             <p className="mt-5 text-lg leading-8 text-white/58">
-              A visual workspace built for multi-modal AI. No locked credit system,
-              no hidden workflow format, no single-provider ceiling.
+              {t('how.subtitle')}
             </p>
           </div>
 
           <div className="relative grid gap-6 md:grid-cols-3">
             <div className="absolute left-20 right-20 top-1/2 hidden h-px bg-[linear-gradient(90deg,transparent,rgba(139,92,246,0.34),transparent)] md:block" />
-            {steps.map((step) => {
+            {stepStyles.map((step, index) => {
               const Icon = step.icon;
               return (
                 <article
-                  key={step.title}
+                  key={index}
                   className="relative z-10 rounded-2xl border border-white/8 bg-[#0d0d13] p-7 transition hover:border-white/18"
                 >
                   <div className={`mb-6 flex size-16 items-center justify-center rounded-2xl border ${step.tone}`}>
                     <Icon className="size-8" />
                   </div>
-                  <h3 className="text-xl font-bold">{step.title}</h3>
-                  <p className="mt-3 text-sm leading-6 text-white/58">{step.body}</p>
+                  <h3 className="text-xl font-bold">{t(`how.steps.${index}.title`)}</h3>
+                  <p className="mt-3 text-sm leading-6 text-white/58">{t(`how.steps.${index}.body`)}</p>
                 </article>
               );
             })}
@@ -474,10 +458,9 @@ export function LandingPage() {
       >
         <div className="mx-auto max-w-7xl px-5 md:px-6">
           <div className="mb-14 max-w-3xl">
-            <h2 className="text-3xl font-bold md:text-5xl">Quick start</h2>
+            <h2 className="text-3xl font-bold md:text-5xl">{t('quick.title')}</h2>
             <p className="mt-5 text-lg leading-8 text-white/58">
-              Use the hosted app when you want speed. Self-host when you want complete
-              control.
+              {t('quick.subtitle')}
             </p>
           </div>
 
@@ -486,18 +469,17 @@ export function LandingPage() {
               <div>
                 <div className="mb-6 flex items-center gap-3">
                   <Cloud className="size-10 text-[#a78bfa]" />
-                  <h3 className="text-2xl font-bold">Hosted web app</h3>
+                  <h3 className="text-2xl font-bold">{t('quick.hostedTitle')}</h3>
                 </div>
                 <p className="mb-10 text-lg leading-8 text-white/62">
-                  The fastest way to try Open Canvas. Use the Cyberbara-hosted app,
-                  keep your workflow in the browser, and bring your own API keys.
+                  {t('quick.hostedBody')}
                 </p>
               </div>
               <Link
                 href="/canvas"
                 className="landing-glow-button inline-flex items-center justify-center gap-3 rounded-xl bg-white px-8 py-5 text-lg font-bold text-[#0b0b0f] transition hover:scale-[1.02]"
               >
-                Launch web app
+                {t('quick.hostedCta')}
                 <ArrowUpRight className="size-5" />
               </Link>
             </article>
@@ -505,11 +487,10 @@ export function LandingPage() {
             <article className="flex flex-col rounded-2xl border border-white/10 bg-[#050505] p-8 md:p-10">
               <div className="mb-6 flex items-center gap-3">
                 <TerminalSquare className="size-10 text-[#65d6ad]" />
-                <h3 className="text-2xl font-bold">Self-hosted with AI</h3>
+                <h3 className="text-2xl font-bold">{t('quick.selfHostedTitle')}</h3>
               </div>
               <p className="mb-6 text-sm leading-6 text-white/58">
-                Ask your desktop AI agent to install and run the project locally. It can
-                read the repository, install dependencies, and start the app for you.
+                {t('quick.selfHostedBody')}
               </p>
 
               <div className="mt-auto overflow-hidden rounded-xl border border-white/10 bg-[#111] font-mono text-sm shadow-2xl">
@@ -521,12 +502,12 @@ export function LandingPage() {
                 </div>
                 <div className="p-6">
                   <div className="mb-2 select-none text-white/36">
-                    # Send this command to your AI agent:
+                    {t('quick.promptLabel')}
                   </div>
                   <div className="flex gap-2">
                     <span className="select-none text-[#65d6ad]">&gt;</span>
                     <p className="leading-7 text-white/78">
-                      Setup and run Open Canvas on the desktop for me. Read{' '}
+                      {t('quick.promptText')}{' '}
                       <a
                         href={githubUrl}
                         target="_blank"
@@ -546,18 +527,20 @@ export function LandingPage() {
 
       <section id="faq" className="relative z-10 border-t border-white/8 py-24">
         <div className="mx-auto max-w-3xl px-5 md:px-6">
-          <h2 className="mb-10 text-center text-3xl font-bold">Frequently asked questions</h2>
+          <h2 className="mb-10 text-center text-3xl font-bold">{t('faq.title')}</h2>
           <div className="space-y-4">
-            {faqs.map((faq) => (
+            {[0, 1, 2, 3].map((index) => (
               <details
-                key={faq.question}
+                key={index}
                 className="group rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur"
               >
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-6 text-lg font-semibold [&::-webkit-details-marker]:hidden">
-                  <span>{faq.question}</span>
+                  <span>{t(`faq.items.${index}.question`)}</span>
                   <ChevronDown className="size-5 shrink-0 transition group-open:rotate-180" />
                 </summary>
-                <p className="px-6 pb-6 text-sm leading-7 text-white/58">{faq.answer}</p>
+                <p className="px-6 pb-6 text-sm leading-7 text-white/58">
+                  {t(`faq.items.${index}.answer`)}
+                </p>
               </details>
             ))}
           </div>
@@ -574,7 +557,7 @@ export function LandingPage() {
           </Link>
 
           <p className="text-center text-sm text-white/42">
-            Built by{' '}
+            {t('footer.builtBy')}{' '}
             <a
               href="https://cyberbara.com"
               target="_blank"
@@ -583,7 +566,7 @@ export function LandingPage() {
             >
               Cyberbara
             </a>
-            . Fully open source.
+            {t('footer.openSource')}
           </p>
 
           <div className="flex items-center gap-5">

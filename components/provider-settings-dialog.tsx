@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { KeyRound, Server, Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
 import {
@@ -103,13 +104,15 @@ function ProviderSettingsFields({
   showProviderKeys?: boolean;
   showStorage?: boolean;
 }) {
+  const t = useTranslations('providerSettings');
+
   return (
     <div className="space-y-5">
       {showProviderKeys ? (
         <>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-2 sm:col-span-2">
-              <Label htmlFor="openrouterApiKey">OpenRouter API key</Label>
+              <Label htmlFor="openrouterApiKey">{t('fields.openrouterApiKey')}</Label>
               <Input
                 id="openrouterApiKey"
                 type="password"
@@ -124,7 +127,7 @@ function ProviderSettingsFields({
             </div>
 
             <div className="grid gap-2 sm:col-span-2">
-              <Label htmlFor="openrouterBaseUrl">OpenRouter base URL</Label>
+              <Label htmlFor="openrouterBaseUrl">{t('fields.openrouterBaseUrl')}</Label>
               <Input
                 id="openrouterBaseUrl"
                 value={settings.openrouterBaseUrl}
@@ -138,7 +141,7 @@ function ProviderSettingsFields({
             </div>
 
             <div className="grid gap-2 sm:col-span-2">
-              <Label htmlFor="replicateApiToken">Replicate API token</Label>
+              <Label htmlFor="replicateApiToken">{t('fields.replicateApiToken')}</Label>
               <Input
                 id="replicateApiToken"
                 type="password"
@@ -155,7 +158,7 @@ function ProviderSettingsFields({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-2 sm:col-span-2">
-              <Label htmlFor="cyberbaraApiKey">Cyberbara API key</Label>
+              <Label htmlFor="cyberbaraApiKey">{t('fields.cyberbaraApiKey')}</Label>
               <Input
                 id="cyberbaraApiKey"
                 type="password"
@@ -170,7 +173,7 @@ function ProviderSettingsFields({
             </div>
 
             <div className="grid gap-2 sm:col-span-2">
-              <Label htmlFor="cyberbaraBaseUrl">Cyberbara base URL</Label>
+              <Label htmlFor="cyberbaraBaseUrl">{t('fields.cyberbaraBaseUrl')}</Label>
               <Input
                 id="cyberbaraBaseUrl"
                 value={settings.cyberbaraBaseUrl}
@@ -189,7 +192,7 @@ function ProviderSettingsFields({
       {showStorage ? (
         <div className="grid gap-3">
         <div className="grid gap-2">
-          <Label>Upload storage</Label>
+          <Label>{t('fields.uploadStorage')}</Label>
           <Select
             value={settings.storageProvider}
             onValueChange={(value) =>
@@ -203,9 +206,9 @@ function ProviderSettingsFields({
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="border-white/10 bg-[#0f1115] text-white">
-              <SelectItem value="disabled">Disabled</SelectItem>
-              <SelectItem value="cyberbara">Cyberbara uploads</SelectItem>
-              <SelectItem value="s3-compatible">S3-compatible</SelectItem>
+              <SelectItem value="disabled">{t('storage.disabled')}</SelectItem>
+              <SelectItem value="cyberbara">{t('storage.cyberbara')}</SelectItem>
+              <SelectItem value="s3-compatible">{t('storage.s3')}</SelectItem>
             </SelectContent>
           </Select>
           <FieldError message={fieldErrors.storageProvider} />
@@ -214,7 +217,7 @@ function ProviderSettingsFields({
         {settings.storageProvider === 's3-compatible' ? (
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-2 sm:col-span-2">
-              <Label htmlFor="storageS3Endpoint">S3 endpoint</Label>
+              <Label htmlFor="storageS3Endpoint">{t('fields.s3Endpoint')}</Label>
               <Input
                 id="storageS3Endpoint"
                 value={settings.storageS3Endpoint}
@@ -226,7 +229,7 @@ function ProviderSettingsFields({
               <FieldError message={fieldErrors.storageS3Endpoint} />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="storageS3Region">Region</Label>
+              <Label htmlFor="storageS3Region">{t('fields.s3Region')}</Label>
               <Input
                 id="storageS3Region"
                 value={settings.storageS3Region}
@@ -237,7 +240,7 @@ function ProviderSettingsFields({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="storageS3Bucket">Bucket</Label>
+              <Label htmlFor="storageS3Bucket">{t('fields.s3Bucket')}</Label>
               <Input
                 id="storageS3Bucket"
                 value={settings.storageS3Bucket}
@@ -249,7 +252,7 @@ function ProviderSettingsFields({
               <FieldError message={fieldErrors.storageS3Bucket} />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="storageS3AccessKeyId">Access key</Label>
+              <Label htmlFor="storageS3AccessKeyId">{t('fields.s3AccessKey')}</Label>
               <Input
                 id="storageS3AccessKeyId"
                 value={settings.storageS3AccessKeyId}
@@ -261,7 +264,7 @@ function ProviderSettingsFields({
               <FieldError message={fieldErrors.storageS3AccessKeyId} />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="storageS3SecretAccessKey">Secret key</Label>
+              <Label htmlFor="storageS3SecretAccessKey">{t('fields.s3SecretKey')}</Label>
               <Input
                 id="storageS3SecretAccessKey"
                 type="password"
@@ -274,7 +277,7 @@ function ProviderSettingsFields({
               <FieldError message={fieldErrors.storageS3SecretAccessKey} />
             </div>
             <div className="grid gap-2 sm:col-span-2">
-              <Label htmlFor="storageS3PublicDomain">Public domain</Label>
+              <Label htmlFor="storageS3PublicDomain">{t('fields.s3PublicDomain')}</Label>
               <Input
                 id="storageS3PublicDomain"
                 value={settings.storageS3PublicDomain}
@@ -287,7 +290,7 @@ function ProviderSettingsFields({
               <FieldError message={fieldErrors.storageS3PublicDomain} />
             </div>
             <div className="grid gap-2 sm:col-span-2">
-              <Label htmlFor="storageS3PathPrefix">Path prefix</Label>
+              <Label htmlFor="storageS3PathPrefix">{t('fields.s3PathPrefix')}</Label>
               <Input
                 id="storageS3PathPrefix"
                 value={settings.storageS3PathPrefix}
@@ -314,6 +317,7 @@ export function ProviderSettingsDialog({
   onOpenChange: (open: boolean) => void;
   onSaved?: (settings: ProviderSettings) => void;
 }) {
+  const t = useTranslations('providerSettings');
   const [settings, setSettings] = useState<ProviderSettings>(() =>
     readProviderSettingsFromLocalStorage()
   );
@@ -343,12 +347,12 @@ export function ProviderSettingsDialog({
     try {
       setIsSaving(true);
       await saveProviderSettings(settings);
-      toast.success('Provider settings saved globally.');
+      toast.success(t('toast.saved'));
       onSaved?.(settings);
       onOpenChange(false);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Failed to save provider settings'
+        error instanceof Error ? error.message : t('toast.failed')
       );
     } finally {
       setIsSaving(false);
@@ -359,12 +363,11 @@ export function ProviderSettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[88dvh] max-w-2xl overflow-y-auto border-white/10 bg-[#0f1115] text-white">
         <DialogHeader>
-          <DialogTitle>Global provider settings</DialogTitle>
+          <DialogTitle>{t('dialogTitle')}</DialogTitle>
         </DialogHeader>
 
         <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-zinc-300">
-          These keys apply to every canvas. They are saved in this browser and
-          mirrored to a local cookie so canvas execution routes can read them.
+          {t('dialogDescription')}
         </div>
 
         <ProviderSettingsFields
@@ -380,7 +383,7 @@ export function ProviderSettingsDialog({
             className="border-white/10 bg-transparent text-white hover:bg-white/10"
             onClick={() => onOpenChange(false)}
           >
-            Cancel
+            {t('actions.cancel')}
           </Button>
           <Button
             type="button"
@@ -388,7 +391,7 @@ export function ProviderSettingsDialog({
             disabled={isSaving}
             className="bg-white text-black hover:bg-zinc-200"
           >
-            {isSaving ? 'Saving...' : 'Save globally'}
+            {isSaving ? t('actions.saving') : t('actions.save')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -405,6 +408,7 @@ export function OnboardingWizard({
   onOpenChange: (open: boolean) => void;
   onComplete?: (settings: ProviderSettings) => void;
 }) {
+  const t = useTranslations('providerSettings');
   const [step, setStep] = useState(0);
   const [settings, setSettings] = useState<ProviderSettings>(() =>
     readProviderSettingsFromLocalStorage()
@@ -441,12 +445,12 @@ export function OnboardingWizard({
       setIsSaving(true);
       await saveProviderSettings(settings);
       window.localStorage.setItem(ONBOARDING_LOCAL_STORAGE_KEY, 'done');
-      toast.success('Open Canvas is ready.');
+      toast.success(t('toast.ready'));
       onComplete?.(settings);
       onOpenChange(false);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Failed to save provider settings'
+        error instanceof Error ? error.message : t('toast.failed')
       );
     } finally {
       setIsSaving(false);
@@ -457,14 +461,14 @@ export function OnboardingWizard({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[88dvh] max-w-2xl overflow-y-auto border-white/10 bg-[#0f1115] text-white">
         <DialogHeader>
-          <DialogTitle>Set up Open Canvas</DialogTitle>
+          <DialogTitle>{t('setupTitle')}</DialogTitle>
         </DialogHeader>
 
         <div className="grid gap-3 sm:grid-cols-3">
           {[
-            ['1', 'Choose keys'],
-            ['2', 'Add storage'],
-            ['3', 'Start creating'],
+            ['1', t('steps.chooseKeys')],
+            ['2', t('steps.addStorage')],
+            ['3', t('steps.startCreating')],
           ].map(([number, label], index) => (
             <div
               key={number}
@@ -474,7 +478,7 @@ export function OnboardingWizard({
                   : 'border-white/10 bg-white/[0.03] text-white/55'
               }`}
             >
-              <div className="text-xs text-white/45">Step {number}</div>
+              <div className="text-xs text-white/45">{t('steps.stepLabel', { number })}</div>
               <div className="mt-1 font-medium">{label}</div>
             </div>
           ))}
@@ -485,9 +489,7 @@ export function OnboardingWizard({
             <div className="flex gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-zinc-300">
               <KeyRound className="mt-0.5 size-4 shrink-0 text-white/70" />
               <p>
-                Add at least one provider key. Use OpenRouter for text,
-                Replicate for image or video models, and Cyberbara for media
-                generation or uploads.
+                {t('intro')}
               </p>
             </div>
             <ProviderSettingsFields
@@ -504,9 +506,7 @@ export function OnboardingWizard({
             <div className="flex gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-zinc-300">
               <Server className="mt-0.5 size-4 shrink-0 text-white/70" />
               <p>
-                Storage is optional. Enable Cyberbara uploads or your own
-                S3-compatible bucket when you want local file uploads inside
-                canvas nodes.
+                {t('storageIntro')}
               </p>
             </div>
             <ProviderSettingsFields
@@ -523,34 +523,32 @@ export function OnboardingWizard({
             <div className="flex gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-zinc-300">
               <Sparkles className="mt-0.5 size-4 shrink-0 text-white/70" />
               <p>
-                Your setup is global. New and existing canvases will use these
-                keys without any Cyberbara account, hosted database, or credits
-                system.
+                {t('readyIntro')}
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-lg border border-white/10 bg-black/30 p-4">
                 <div className="text-sm font-medium">OpenRouter</div>
                 <div className="mt-1 text-xs text-white/55">
-                  {settings.openrouterApiKey ? 'Configured' : 'Not set'}
+                  {settings.openrouterApiKey ? t('status.configured') : t('status.notSet')}
                 </div>
               </div>
               <div className="rounded-lg border border-white/10 bg-black/30 p-4">
                 <div className="text-sm font-medium">Replicate</div>
                 <div className="mt-1 text-xs text-white/55">
-                  {settings.replicateApiToken ? 'Configured' : 'Not set'}
+                  {settings.replicateApiToken ? t('status.configured') : t('status.notSet')}
                 </div>
               </div>
               <div className="rounded-lg border border-white/10 bg-black/30 p-4">
                 <div className="text-sm font-medium">Cyberbara</div>
                 <div className="mt-1 text-xs text-white/55">
-                  {settings.cyberbaraApiKey ? 'Configured' : 'Not set'}
+                  {settings.cyberbaraApiKey ? t('status.configured') : t('status.notSet')}
                 </div>
               </div>
             </div>
             {!hasAnyApiKey(settings) ? (
               <div className="rounded-lg border border-yellow-400/25 bg-yellow-400/10 p-4 text-sm text-yellow-100">
-                You can skip for now, but generation will require a provider key.
+                {t('skipWarning')}
               </div>
             ) : null}
           </div>
@@ -563,7 +561,7 @@ export function OnboardingWizard({
             className="border-white/10 bg-transparent text-white hover:bg-white/10"
             onClick={closeWizard}
           >
-            Skip
+            {t('actions.skip')}
           </Button>
           {step > 0 ? (
             <Button
@@ -572,7 +570,7 @@ export function OnboardingWizard({
               className="border-white/10 bg-transparent text-white hover:bg-white/10"
               onClick={() => setStep((current) => Math.max(0, current - 1))}
             >
-              Back
+              {t('actions.back')}
             </Button>
           ) : null}
           {step < 2 ? (
@@ -581,7 +579,7 @@ export function OnboardingWizard({
               className="bg-white text-black hover:bg-zinc-200"
               onClick={() => setStep((current) => Math.min(2, current + 1))}
             >
-              Continue
+              {t('actions.continue')}
             </Button>
           ) : (
             <Button
@@ -590,7 +588,7 @@ export function OnboardingWizard({
               onClick={completeWizard}
               disabled={isSaving}
             >
-              {isSaving ? 'Saving...' : 'Finish setup'}
+              {isSaving ? t('actions.saving') : t('actions.finish')}
             </Button>
           )}
         </DialogFooter>

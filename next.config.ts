@@ -1,6 +1,9 @@
 import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
 import path from 'node:path';
 import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare';
+
+const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 const nextConfig: NextConfig = {
   output: process.env.VERCEL ? undefined : 'standalone',
@@ -16,6 +19,6 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);
 
 initOpenNextCloudflareForDev();

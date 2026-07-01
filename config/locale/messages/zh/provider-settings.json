@@ -1,0 +1,53 @@
+{
+  "setupTitle": "设置 Open Canvas",
+  "dialogTitle": "全局提供方设置",
+  "dialogDescription": "这些 Key 会应用到所有画布。它们会保存在这个浏览器里，并同步到本地 Cookie，方便画布执行路由读取。",
+  "steps": {
+    "stepLabel": "第 {number} 步",
+    "chooseKeys": "选择 Key",
+    "addStorage": "添加存储",
+    "startCreating": "开始创作"
+  },
+  "intro": "至少添加一个提供方 Key。文本可用 OpenRouter，图片或视频模型可用 Replicate，媒体生成或上传可用 Cyberbara。",
+  "storageIntro": "存储是可选的。需要在画布节点里上传本地文件时，可以启用 Cyberbara 上传或你自己的 S3 兼容存储桶。",
+  "readyIntro": "这是一组全局设置。新的和已有的画布都会使用这些 Key，不需要 Cyberbara 账号、托管数据库或积分系统。",
+  "skipWarning": "你可以先跳过，但生成内容时仍然需要提供方 Key。",
+  "fields": {
+    "openrouterApiKey": "OpenRouter API Key",
+    "openrouterBaseUrl": "OpenRouter Base URL",
+    "replicateApiToken": "Replicate API Token",
+    "cyberbaraApiKey": "Cyberbara API Key",
+    "cyberbaraBaseUrl": "Cyberbara Base URL",
+    "uploadStorage": "上传存储",
+    "s3Endpoint": "S3 Endpoint",
+    "s3Region": "S3 区域",
+    "s3AccessKey": "S3 Access Key",
+    "s3SecretKey": "S3 Secret Key",
+    "s3Bucket": "S3 Bucket",
+    "s3PublicDomain": "公开域名",
+    "s3PathPrefix": "路径前缀"
+  },
+  "storage": {
+    "disabled": "禁用",
+    "cyberbara": "Cyberbara 上传",
+    "s3": "S3 兼容存储"
+  },
+  "actions": {
+    "cancel": "取消",
+    "back": "返回",
+    "skip": "跳过",
+    "continue": "继续",
+    "finish": "完成设置",
+    "save": "全局保存",
+    "saving": "保存中..."
+  },
+  "status": {
+    "configured": "已配置",
+    "notSet": "未设置"
+  },
+  "toast": {
+    "saved": "提供方设置已保存。",
+    "ready": "Open Canvas 已准备好。",
+    "failed": "保存提供方设置失败。"
+  }
+}

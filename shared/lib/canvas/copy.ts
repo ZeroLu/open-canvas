@@ -1,4 +1,4 @@
-export const CANVAS_LOCALES = ['en', 'zh', 'ja', 'de', 'fr', 'es'] as const;
+export const CANVAS_LOCALES = ['en', 'zh'] as const;
 
 export type CanvasLocale = (typeof CANVAS_LOCALES)[number];
 
@@ -70,110 +70,6 @@ export const DEFAULT_NODE_COPY: Record<
     untitledCanvasNumber: '未命名画布 {index}',
     untitledNode: '未命名节点',
     any: '不限',
-  },
-  ja: {
-    text: {
-      title: 'テキストノード',
-      subtitle: 'プロンプト、メモ、生成テキストに使用します。',
-    },
-    note: {
-      title: 'ノートノード',
-      subtitle: '説明やリッチテキストメモに使用します。',
-    },
-    image: {
-      title: '画像ノード',
-      subtitle: '参照画像、アップロード画像、生成静止画に使用します。',
-    },
-    audio: {
-      title: '音声ノード',
-      subtitle: 'アップロード音声、効果音、生成音声に使用します。',
-    },
-    video: {
-      title: '動画ノード',
-      subtitle: 'タイムライン出力、モーション参照、生成動画に使用します。',
-    },
-    untitledCanvas: '無題のキャンバス',
-    untitledCanvasNumber: '無題のキャンバス {index}',
-    untitledNode: '無題のノード',
-    any: '指定なし',
-  },
-  de: {
-    text: {
-      title: 'Textknoten',
-      subtitle: 'Für Prompts, Notizen oder generierten Text.',
-    },
-    note: {
-      title: 'Notizknoten',
-      subtitle: 'Für Erklärungen und formatierte Notizen.',
-    },
-    image: {
-      title: 'Bildknoten',
-      subtitle: 'Für Referenzen, Uploads oder generierte Standbilder.',
-    },
-    audio: {
-      title: 'Audioknoten',
-      subtitle: 'Für hochgeladene Clips, Soundeffekte oder generiertes Audio.',
-    },
-    video: {
-      title: 'Videoknoten',
-      subtitle: 'Für Timeline-Ausgabe, Bewegungsreferenzen oder generierte Videos.',
-    },
-    untitledCanvas: 'Unbenanntes Canvas',
-    untitledCanvasNumber: 'Unbenanntes Canvas {index}',
-    untitledNode: 'Unbenannter Knoten',
-    any: 'Beliebig',
-  },
-  fr: {
-    text: {
-      title: 'Nœud texte',
-      subtitle: 'Pour les prompts, les notes ou le texte généré.',
-    },
-    note: {
-      title: 'Nœud note',
-      subtitle: 'Pour les explications et les notes enrichies.',
-    },
-    image: {
-      title: 'Nœud image',
-      subtitle: 'Pour les références, les imports ou les images fixes générées.',
-    },
-    audio: {
-      title: 'Nœud audio',
-      subtitle: 'Pour les extraits importés, les effets sonores ou l’audio généré.',
-    },
-    video: {
-      title: 'Nœud vidéo',
-      subtitle: 'Pour la sortie de timeline, les références de mouvement ou la vidéo générée.',
-    },
-    untitledCanvas: 'Canvas sans titre',
-    untitledCanvasNumber: 'Canvas sans titre {index}',
-    untitledNode: 'Nœud sans titre',
-    any: 'Aucune',
-  },
-  es: {
-    text: {
-      title: 'Nodo de texto',
-      subtitle: 'Para prompts, notas o texto generado.',
-    },
-    note: {
-      title: 'Nodo de nota',
-      subtitle: 'Para explicaciones y notas enriquecidas.',
-    },
-    image: {
-      title: 'Nodo de imagen',
-      subtitle: 'Para referencias, archivos subidos o imágenes fijas generadas.',
-    },
-    audio: {
-      title: 'Nodo de audio',
-      subtitle: 'Para clips subidos, efectos de sonido o audio generado.',
-    },
-    video: {
-      title: 'Nodo de video',
-      subtitle: 'Para salida de línea de tiempo, referencias de movimiento o video generado.',
-    },
-    untitledCanvas: 'Canvas sin título',
-    untitledCanvasNumber: 'Canvas sin título {index}',
-    untitledNode: 'Nodo sin título',
-    any: 'Cualquiera',
   },
 };
 

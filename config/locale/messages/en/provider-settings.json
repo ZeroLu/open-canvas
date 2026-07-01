@@ -1,0 +1,53 @@
+{
+  "setupTitle": "Set up Open Canvas",
+  "dialogTitle": "Global provider settings",
+  "dialogDescription": "These keys apply to every canvas. They are saved in this browser and mirrored to a local cookie so canvas execution routes can read them.",
+  "steps": {
+    "stepLabel": "Step {number}",
+    "chooseKeys": "Choose keys",
+    "addStorage": "Add storage",
+    "startCreating": "Start creating"
+  },
+  "intro": "Add at least one provider key. Use OpenRouter for text, Replicate for image or video models, and Cyberbara for media generation or uploads.",
+  "storageIntro": "Storage is optional. Enable Cyberbara uploads or your own S3-compatible bucket when you want local file uploads inside canvas nodes.",
+  "readyIntro": "Your setup is global. New and existing canvases will use these keys without any Cyberbara account, hosted database, or credits system.",
+  "skipWarning": "You can skip for now, but generation will require a provider key.",
+  "fields": {
+    "openrouterApiKey": "OpenRouter API key",
+    "openrouterBaseUrl": "OpenRouter base URL",
+    "replicateApiToken": "Replicate API token",
+    "cyberbaraApiKey": "Cyberbara API key",
+    "cyberbaraBaseUrl": "Cyberbara base URL",
+    "uploadStorage": "Upload storage",
+    "s3Endpoint": "S3 endpoint",
+    "s3Region": "S3 region",
+    "s3AccessKey": "S3 access key",
+    "s3SecretKey": "S3 secret key",
+    "s3Bucket": "S3 bucket",
+    "s3PublicDomain": "Public domain",
+    "s3PathPrefix": "Path prefix"
+  },
+  "storage": {
+    "disabled": "Disabled",
+    "cyberbara": "Cyberbara uploads",
+    "s3": "S3-compatible"
+  },
+  "actions": {
+    "cancel": "Cancel",
+    "back": "Back",
+    "skip": "Skip",
+    "continue": "Continue",
+    "finish": "Finish setup",
+    "save": "Save globally",
+    "saving": "Saving..."
+  },
+  "status": {
+    "configured": "Configured",
+    "notSet": "Not set"
+  },
+  "toast": {
+    "saved": "Provider settings saved.",
+    "ready": "Open Canvas is ready.",
+    "failed": "Failed to save provider settings."
+  }
+}

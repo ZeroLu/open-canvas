@@ -1,0 +1,84 @@
+{
+  "nav": {
+    "howItWorks": "工作方式",
+    "providers": "模型提供方",
+    "quickStart": "快速开始",
+    "launch": "打开应用",
+    "language": "English"
+  },
+  "hero": {
+    "badge": "100% 开源替代方案",
+    "badgeShort": "开源替代方案",
+    "title": "无限 AI 画布，",
+    "titleAccent": "完全开放。",
+    "subtitle": "摆脱 TapNow、LibTV、Higgsfield 这类封闭生态。你可以带上自己的 API Key，在空间化工作区里生成、编辑和导演图片与视频。",
+    "primaryCta": "开始创作",
+    "githubCta": "在 GitHub 点星"
+  },
+  "preview": {
+    "back": "返回",
+    "workspace": "画布工作台",
+    "title": "群像 FPV 镜头模板",
+    "saving": "保存中",
+    "share": "分享",
+    "imageNode": "图片节点",
+    "videoNode": "视频节点"
+  },
+  "providers": {
+    "eyebrow": "连接任意 API。没有平台锁定。"
+  },
+  "how": {
+    "title": "Open Canvas 如何工作",
+    "subtitle": "为多模态 AI 打造的可视化工作区。没有封闭积分系统，没有隐藏工作流格式，也不被单一提供方限制。",
+    "steps": [
+      {
+        "title": "1. 带上自己的 Key",
+        "body": "连接 OpenAI、Gemini、OpenRouter、Replicate 或 Cyberbara。提供方访问权限和账单都留在你自己的账号里。"
+      },
+      {
+        "title": "2. 添加节点",
+        "body": "把文本、图片、视频和生成节点放到空间画布上，让创作流程始终可见。"
+      },
+      {
+        "title": "3. 连接并生成",
+        "body": "把一个输出变成下一个输入。用可视化方式组合多模型图片和视频流水线，不被单一平台锁住。"
+      }
+    ]
+  },
+  "quick": {
+    "title": "快速开始",
+    "subtitle": "想最快试用就打开托管版；想完全掌控就自托管。",
+    "hostedTitle": "托管 Web 应用",
+    "hostedBody": "最快体验 Open Canvas 的方式。使用 Cyberbara 托管版，在浏览器里保存工作流，并使用你自己的 API Key。",
+    "hostedCta": "打开 Web 应用",
+    "selfHostedTitle": "用 AI 自托管",
+    "selfHostedBody": "让你的桌面 AI Agent 帮你在本地安装并运行项目。它可以读取仓库、安装依赖并启动应用。",
+    "promptLabel": "# 把这条指令发给你的 AI Agent：",
+    "promptText": "帮我在桌面上设置并运行 Open Canvas，阅读"
+  },
+  "faq": {
+    "title": "常见问题",
+    "items": [
+      {
+        "question": "什么是 BYOK？",
+        "answer": "BYOK 是 Bring Your Own Key。你不需要购买平台积分，而是粘贴自己的提供方 API Key，并直接按提供方价格为生成付费。"
+      },
+      {
+        "question": "Open Canvas 免费吗？",
+        "answer": "是的。产品本身开源，托管版也可以免费使用。你唯一的生成成本来自所选 AI 提供方的 API 用量。"
+      },
+      {
+        "question": "可以自托管吗？",
+        "answer": "可以。你可以在本地运行 Open Canvas，也可以部署自己的版本。Canvas JSON 导入导出会让你的工作保持可迁移。"
+      },
+      {
+        "question": "托管版里的 API Key 安全吗？",
+        "answer": "你的 Key 在浏览器里配置，并用于向提供方发起请求。如果你需要最严格的控制，可以在本地或自己的基础设施上运行同一套开源应用。"
+      }
+    ]
+  },
+  "footer": {
+    "builtBy": "由",
+    "openSource": " 构建。完全开源。"
+  }
+}
